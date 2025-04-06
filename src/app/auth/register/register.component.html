@@ -1,0 +1,21 @@
+<h2>Registro</h2>
+<label>
+  <input type="radio" name="userType" (change)="userType = 'player'" checked>
+  Jugador
+</label>
+<label>
+  <input type="radio" name="userType" (change)="userType = 'team'">
+  Equipo
+</label>
+
+<form [formGroup]="registerForm" (ngSubmit)="register()">
+  <label>Nombre:</label>
+  <input type="text" formControlName="name">
+  <label>Email:</label>
+  <input type="email" formControlName="email">
+  <label>Contraseña:</label>
+  <input type="password" formControlName="password">
+  <label>Confirmar Contraseña:</label>
+  <input type="password" formControlName="confirmPassword">
+  <button type="submit" [disabled]="registerForm.invalid">Registrarse</button>
+</form>
