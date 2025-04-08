@@ -1,21 +1,21 @@
-<h2>Registro</h2>
-<label>
-  <input type="radio" name="userType" (change)="userType = 'player'" checked>
-  Jugador
-</label>
-<label>
-  <input type="radio" name="userType" (change)="userType = 'team'">
-  Equipo
-</label>
-
-<form [formGroup]="registerForm" (ngSubmit)="register()">
-  <label>Nombre:</label>
-  <input type="text" formControlName="name">
-  <label>Email:</label>
-  <input type="email" formControlName="email">
-  <label>Contraseña:</label>
-  <input type="password" formControlName="password">
-  <label>Confirmar Contraseña:</label>
-  <input type="password" formControlName="confirmPassword">
-  <button type="submit" [disabled]="registerForm.invalid">Registrarse</button>
-</form>
+<div class="auth-container">
+  <div class="form-box">
+    <h2>Registro</h2>
+    <form [formGroup]="registerForm" (ngSubmit)="register()">
+      <div class="form-control">
+        <input type="text" formControlName="name" placeholder="Nombre" />
+      </div>
+      <div class="form-control">
+        <input type="email" formControlName="email" placeholder="Correo electrónico" />
+      </div>
+      <div class="form-control">
+        <input type="password" formControlName="password" placeholder="Contraseña" />
+      </div>
+      <div class="form-control">
+        <input type="password" formControlName="confirmPassword" placeholder="Confirmar contraseña" />
+      </div>
+      <button type="submit">Registrarse</button>
+    </form>
+    <p>Ya tienes cuenta? <button (click)="goToLogin()">Inicia sesión aquí</button></p>
+  </div>
+</div>

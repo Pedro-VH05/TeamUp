@@ -1,0 +1,31 @@
+<div class="landing-container">
+  <header class="header">
+    <div class="logo-section">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+      <span class="app-name">TeamUp</span>
+    </div>
+
+    <div class="header-actions">
+      <input type="text" placeholder="Buscar..." class="search-bar">
+      <button class="messages-btn">Mensajes</button>
+    </div>
+
+    <div class="user-profile">
+      <img src="assets/user-profile.jpg" alt="User Profile" class="profile-pic">
+      <span class="username">{{ (currentUser$ | async)?.name }}</span>
+    </div>
+  </header>
+
+  <main class="content">
+    <p>Contenido vacío</p>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
+    <div class="footer-links">
+      <a href="#">Términos y condiciones</a>
+      <a href="#">Política de privacidad</a>
+      <a href="#">Contacto</a>
+    </div>
+  </footer>
+</div>
