@@ -9,7 +9,7 @@ import { UserService } from './user.service';
 export class AuthService {
   private auth = inject(Auth);
   private router = inject(Router);
-  private userService = inject(UserService); // Evita ciclo con inyección directa
+  private userService = inject(UserService);
 
   constructor() {}
 
