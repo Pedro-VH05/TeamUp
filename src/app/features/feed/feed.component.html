@@ -1,3 +1,4 @@
+<!-- feed.component.html -->
 <div class="landing-container">
   <header class="header">
     <div class="logo-section">
@@ -11,21 +12,47 @@
     </div>
 
     <div class="user-profile">
-      <img src="assets/user-profile.jpg" alt="User Profile" class="profile-pic">
+      <img [src]="(currentUser$ | async)?.photoURL || 'assets/user-profile.jpg'" alt="User Profile" class="profile-pic">
       <span class="username">{{ (currentUser$ | async)?.name }}</span>
     </div>
   </header>
 
   <main class="content">
-    <p>Contenido vacío</p>
-  </main>
+    <div class="post-creator">
+      <textarea [(ngModel)]="newPostText" placeholder="¿Qué estás pensando?" class="post-input"></textarea>
+      <div class="post-actions">
+        <input type="file" id="post-image" accept="image/*" (change)="onFileSelected($event)" style="display: none">
+        <label for="post-image" class="image-upload-btn">
+          <span *ngIf="!selectedFile">Subir imagen</span>
+          <span *ngIf="selectedFile">Cambiar imagen</span>
+        </label>
+        <button (click)="createPost()" [disabled]="isCreatingPost || !newPostText.trim()" class="post-btn">
+          {{ isCreatingPost ? 'Publicando...' : 'Publicar' }}
+        </button>
+      </div>
 
-  <footer class="footer">
-    <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
-    <div class="footer-links">
-      <a href="#">Términos y condiciones</a>
-      <a href="#">Política de privacidad</a>
-      <a href="#">Contacto</a>
+    <div class="posts-container">
+      <div *ngFor="let post of posts$ | async" class="post-card">
+        <div class="post-header">
+          <img [src]="post.authorPhoto || 'assets/user-profile.jpg'" alt="Author" class="post-author-img">
+          <div class="post-author-info">
+            <span class="post-author-name">{{ post.authorName }}</span>
+            <span class="post-date">{{ post.createdAt | date:'medium' }}</span>
+          </div>
+        </div>
+        <div class="post-content">
+          <p>{{ post.text }}</p>
+          <img *ngIf="post.imageUrl" [src]="post.imageUrl" alt="Post image" class="post-image">
+        </div>
+      </div>
     </div>
-  </footer>
 </div>
+
+<footer class="footer">
+  <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
+  <div class="footer-links">
+    <a href="#">Términos y condiciones</a>
+    <a href="#">Política de privacidad</a>
+    <a href="#">Contacto</a>
+  </div>
+</footer>

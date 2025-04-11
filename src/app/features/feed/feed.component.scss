@@ -1,96 +1,207 @@
 .landing-container {
-  font-family: Arial, sans-serif;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
 
-  /* Header */
-  .header {
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  .logo-section {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
-    background-color: #003366;
-    color: white;
 
-    .logo-section {
+    .logo {
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    .app-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+
+    .search-bar {
+      padding: 0.5rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-right: 1rem;
+    }
+
+    .messages-btn {
+      padding: 0.5rem 1rem;
+      background-color: #4285f4;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  }
+
+  .user-profile {
+    display: flex;
+    align-items: center;
+
+    .profile-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+  }
+}
+
+.content {
+  flex: 1;
+  padding: 2rem;
+  background-color: #f5f5f5;
+
+  .post-creator {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+
+    .post-input {
+      width: 100%;
+      min-height: 100px;
+      padding: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: vertical;
+      margin-bottom: 1rem;
+      font-family: inherit;
+    }
+
+    .post-actions {
       display: flex;
-      align-items: center;
+      justify-content: space-between;
+    }
 
-      .logo {
-        width: 40px;
-        height: 40px;
-        margin-right: 10px;
-      }
+    .image-upload-btn, .post-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
 
-      .app-name {
-        font-size: 1.5rem;
-        font-weight: bold;
+    .image-upload-btn {
+      background-color: #f1f1f1;
+      border: 1px solid #ddd;
+    }
+
+    .post-btn {
+      background-color: #4285f4;
+      color: white;
+      border: none;
+
+      &:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
       }
     }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
+    .image-preview {
+      position: relative;
+      margin-top: 1rem;
 
-      .search-bar {
-        padding: 5px;
-        margin-right: 20px;
-        border: none;
-        border-radius: 5px;
-        width: 200px;
+      .preview-image {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 4px;
       }
 
-      .messages-btn {
-        padding: 10px 15px;
-        background-color: #ff5722;
-        border: none;
-        border-radius: 5px;
+      .remove-image-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(0, 0, 0, 0.5);
         color: white;
+        border: none;
+        border-radius: 50%;
+        width: 25px;
+        height: 25px;
         cursor: pointer;
       }
     }
+  }
 
-    .user-profile {
-      display: flex;
-      align-items: center;
+  .posts-container {
+    .post-card {
+      background-color: white;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      margin-bottom: 1.5rem;
 
-      .profile-pic {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        margin-right: 10px;
+      .post-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+
+        .post-author-img {
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          margin-right: 1rem;
+        }
+
+        .post-author-info {
+          display: flex;
+          flex-direction: column;
+
+          .post-author-name {
+            font-weight: bold;
+          }
+
+          .post-date {
+            font-size: 0.8rem;
+            color: #666;
+          }
+        }
       }
 
-      .username {
-        font-weight: bold;
+      .post-content {
+        p {
+          margin-bottom: 1rem;
+        }
+
+        .post-image {
+          max-width: 100%;
+          max-height: 400px;
+          border-radius: 4px;
+        }
       }
     }
   }
+}
 
-  /* Main Content */
-  .content {
-    flex-grow: 1;
-    padding: 20px;
-    background-color: #f5f5f5;
-  }
+.footer {
+  background-color: #333;
+  color: white;
+  padding: 1.5rem;
+  text-align: center;
 
-  /* Footer */
-  .footer {
-    padding: 20px;
-    background-color: #003366;
-    color: white;
-    text-align: center;
+  .footer-links {
+    margin-top: 1rem;
 
-    .footer-links {
-      margin-top: 10px;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
+    a {
+      color: white;
+      margin: 0 0.5rem;
+      text-decoration: none;
 
-      a {
-        color: white;
-        text-decoration: none;
+      &:hover {
+        text-decoration: underline;
       }
     }
   }
