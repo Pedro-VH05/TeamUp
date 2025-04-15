@@ -25,17 +25,39 @@ export class AuthService {
     })
   }
 
-  // Registro de Jugador
-  async registerPlayer(playerData: any, password: string) {
-    const userCredential = await createUserWithEmailAndPassword(this.auth, playerData.email, password);
-    await this.userService.createUser(userCredential.user.uid, 'player', playerData);
+  async registerPlayer(basicData: any, additionalData: any, password: string) {
+    const userCredential = await createUserWithEmailAndPassword(
+      this.auth,
+      basicData.email,
+      password
+    );
+
+    const fullPlayerData = {
+      ...basicData,
+      ...additionalData,
+      type: 'player',
+      registrationDate: new Date().toISOString()
+    };
+
+    await this.userService.createUser(userCredential.user.uid, fullPlayerData);
     return userCredential.user;
   }
 
-  // Registro de Equipo
-  async registerTeam(teamData: any, password: string) {
-    const userCredential = await createUserWithEmailAndPassword(this.auth, teamData.email, password);
-    await this.userService.createUser(userCredential.user.uid, 'team', teamData);
+  async registerTeam(basicData: any, additionalData: any, password: string) {
+    const userCredential = await createUserWithEmailAndPassword(
+      this.auth,
+      basicData.email,
+      password
+    );
+
+    const fullTeamData = {
+      ...basicData,
+      ...additionalData,
+      type: 'team',
+      registrationDate: new Date().toISOString()
+    };
+
+    await this.userService.createUser(userCredential.user.uid, fullTeamData);
     return userCredential.user;
   }
 
