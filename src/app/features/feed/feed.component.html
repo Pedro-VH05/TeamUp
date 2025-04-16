@@ -1,4 +1,3 @@
-<!-- feed.component.html -->
 <div class="landing-container">
   <header class="header">
     <div class="logo-section">
@@ -12,47 +11,92 @@
     </div>
 
     <div class="user-profile">
-      <img [src]="(currentUser$ | async)?.photoURL || 'assets/user-profile.jpg'" alt="User Profile" class="profile-pic">
-      <span class="username">{{ (currentUser$ | async)?.name }}</span>
+      <img [src]="(currentUser$ | async)?.photoURL || (currentUser$ | async)?.teamLogoUrl || 'assets/user-profile.jpg'"
+           alt="User Profile"
+           class="profile-pic">
+      <span class="username">
+        {{ (currentUser$ | async)?.name || (currentUser$ | async)?.teamName }}
+      </span>
     </div>
   </header>
 
   <main class="content">
     <div class="post-creator">
-      <textarea [(ngModel)]="newPostText" placeholder="¿Qué estás pensando?" class="post-input"></textarea>
+      <textarea [(ngModel)]="newPostText"
+                placeholder="¿Qué estás pensando?"
+                class="post-input"></textarea>
       <div class="post-actions">
-        <input type="file" id="post-image" accept="image/*" (change)="onFileSelected($event)" style="display: none">
+        <input type="file"
+               id="post-image"
+               accept="image/*"
+               (change)="onFileSelected($event)"
+               style="display: none">
         <label for="post-image" class="image-upload-btn">
           <span *ngIf="!selectedFile">Subir imagen</span>
           <span *ngIf="selectedFile">Cambiar imagen</span>
         </label>
-        <button (click)="createPost()" [disabled]="isCreatingPost || !newPostText.trim()" class="post-btn">
+        <button (click)="createPost()"
+                [disabled]="isCreatingPost || !newPostText.trim()"
+                class="post-btn">
           {{ isCreatingPost ? 'Publicando...' : 'Publicar' }}
         </button>
       </div>
+      <div *ngIf="selectedFilePreview" class="image-preview">
+        <img [src]="selectedFilePreview" alt="Preview" class="preview-image">
+        <button (click)="selectedFile = null; selectedFilePreview = null"
+                class="remove-image-btn">
+          ×
+        </button>
+      </div>
+    </div>
 
     <div class="posts-container">
       <div *ngFor="let post of posts$ | async" class="post-card">
         <div class="post-header">
-          <img [src]="post.authorPhoto || 'assets/user-profile.jpg'" alt="Author" class="post-author-img">
+          <img [src]="post.authorPhoto || 'assets/user-profile.jpg'"
+               alt="Author"
+               class="post-author-img">
           <div class="post-author-info">
-            <span class="post-author-name">{{ post.authorName }}</span>
-            <span class="post-date">{{ post.createdAt | date:'medium' }}</span>
+            <div class="author-name-container">
+              <span class="post-author-name">{{ post.authorName }}</span>
+              <span class="author-type-badge"
+                    [class.player]="post.authorType === 'player'"
+                    [class.team]="post.authorType === 'team'">
+                {{ post.authorType === 'player' ? 'Jugador' : 'Club' }}
+              </span>
+            </div>
+            <div class="post-metadata">
+              <span class="post-sport">{{ post.sport }}</span>
+              <span class="post-date">{{ post.createdAt | date:'medium' }}</span>
+            </div>
           </div>
         </div>
         <div class="post-content">
           <p>{{ post.text }}</p>
-          <img *ngIf="post.imageUrl" [src]="post.imageUrl" alt="Post image" class="post-image">
+          <img *ngIf="post.imageUrl"
+               [src]="post.imageUrl"
+               alt="Post image"
+               class="post-image">
         </div>
       </div>
-    </div>
-</div>
 
-<footer class="footer">
-  <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
-  <div class="footer-links">
-    <a href="#">Términos y condiciones</a>
-    <a href="#">Política de privacidad</a>
-    <a href="#">Contacto</a>
-  </div>
-</footer>
+      <div *ngIf="isLoadingPosts" class="loading-indicator">
+        <div class="spinner"></div>
+        <p>Cargando publicaciones...</p>
+      </div>
+
+      <div *ngIf="!(posts$ | async)?.length && !isLoadingPosts" class="no-posts">
+        <p>No hay publicaciones aún. ¡Sé el primero en publicar!</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
+    <div class="footer-links">
+      <a href="#">Términos y condiciones</a>
+      <a href="#">Política de privacidad</a>
+      <a href="#">Contacto</a>
+    </div>
+  </footer>
+</div>

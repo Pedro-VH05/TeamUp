@@ -19,6 +19,8 @@ export class UserService {
       delete userData.profilePicture;
     }
 
+    userData.uid = uid;
+
     await setDoc(doc(this.firestore, 'users', uid), userData);
   }
 

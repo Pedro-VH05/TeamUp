@@ -1,9 +1,8 @@
-// feed.component.ts
 import { Component, OnInit, inject } from '@angular/core';
-import { Observable, firstValueFrom, take, switchMap, of } from 'rxjs';
+import { Observable, firstValueFrom, take, switchMap, of, BehaviorSubject } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, addDoc, collectionData, query, where } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, query, where, orderBy } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
@@ -12,34 +11,52 @@ import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './feed.component.html',
-  styleUrl: './feed.component.scss'
+  styleUrls: ['./feed.component.scss']
 })
 export class FeedComponent implements OnInit {
-  private firestore: Firestore = inject(Firestore);
-  private storage: Storage = inject(Storage);
+  private firestore = inject(Firestore);
+  private storage = inject(Storage);
 
-  currentUser$!: Observable<any>;
-  posts$!: Observable<any[]>;
+  currentUser$: Observable<any>;
+  posts$ = new BehaviorSubject<any[]>([]);
   newPostText = '';
   selectedFile: File | null = null;
   selectedFilePreview: string | null = null;
-  isLoading = false;
-  isCreatingPost: boolean = false;
+  isLoadingPosts = false;
+  isCreatingPost = false;
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) {
+    this.currentUser$ = this.authService.currentUser$;
+  }
 
   ngOnInit(): void {
-    this.currentUser$ = this.authService.currentUser$;
+    this.loadPosts();
+  }
 
-    this.posts$ = this.currentUser$.pipe(
-      switchMap(user => {
-        if (!user?.sport) return of([]);
+  async loadPosts() {
+    this.isLoadingPosts = true;
+    try {
+      const user = await firstValueFrom(this.currentUser$.pipe(take(1)));
+      if (!user?.sport) {
+        this.posts$.next([]);
+        return;
+      }
 
-        const postsRef = collection(this.firestore, 'posts');
-        const q = query(postsRef, where('sport', '==', user.sport));
-        return collectionData(q, { idField: 'id' });
-      })
-    );
+      const postsRef = collection(this.firestore, 'posts');
+      const q = query(
+        postsRef,
+        where('sport', '==', user.sport),
+        orderBy('createdAt', 'desc')
+      );
+
+      const postsArray = await firstValueFrom(collectionData(q, { idField: 'id' }));
+
+      this.posts$.next(postsArray);
+    } catch (error) {
+      console.error('Error loading posts:', error);
+    } finally {
+      this.isLoadingPosts = false;
+    }
   }
 
   onFileSelected(event: any): void {
@@ -59,11 +76,14 @@ export class FeedComponent implements OnInit {
   }
 
   async createPost(): Promise<void> {
-    this.isLoading = true;
+    if (this.isCreatingPost) return;
+
+    this.isCreatingPost = true;
     try {
       const user = await firstValueFrom(this.currentUser$.pipe(take(1)));
 
       if (!user) throw new Error('Usuario no autenticado');
+      if (!user.sport) throw new Error('No tienes deporte asignado');
       if (!this.newPostText.trim()) throw new Error('El texto no puede estar vacío');
 
       let imageUrl = '';
@@ -74,29 +94,31 @@ export class FeedComponent implements OnInit {
         imageUrl = await getDownloadURL(snapshot.ref);
       }
 
-      // Asegurar que authorPhoto tenga un valor por defecto si es undefined
-      const authorPhoto = user.photoURL || 'assets/default-profile.png';
-
       const postData = {
         text: this.newPostText,
-        imageUrl,
+        imageUrl: imageUrl || null,
         createdAt: new Date().toISOString(),
         authorId: user.uid,
-        authorName: user.name || 'Usuario Anónimo',
-        authorPhoto: authorPhoto,
+        authorName: user.firstName + ' ' + user.lastName || user.teamName || 'Usuario Anónimo',
+        authorPhoto: user.photoURL || user.teamLogoUrl || 'assets/user-profile.jpg',
+        authorType: user.type || 'player',
         sport: user.sport
       };
 
       const postsRef = collection(this.firestore, 'posts');
       await addDoc(postsRef, postData);
 
+      // Recargar posts después de crear uno nuevo
+      this.loadPosts();
+
+      // Resetear formulario
       this.newPostText = '';
       this.selectedFile = null;
       this.selectedFilePreview = null;
     } catch (error) {
       console.error('Error al crear el post:', error);
     } finally {
-      this.isLoading = false;
+      this.isCreatingPost = false;
     }
   }
 }

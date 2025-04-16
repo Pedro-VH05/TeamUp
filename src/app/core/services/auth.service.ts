@@ -54,7 +54,11 @@ export class AuthService {
       ...basicData,
       ...additionalData,
       type: 'team',
-      registrationDate: new Date().toISOString()
+      registrationDate: new Date().toISOString(),
+      categories: additionalData.categories.reduce((acc: any, category: any, index: number) => {
+        acc[`category_${index}`] = category;
+        return acc;
+      }, {})
     };
 
     await this.userService.createUser(userCredential.user.uid, fullTeamData);
@@ -64,6 +68,8 @@ export class AuthService {
   // Iniciar Sesión
   async login(email: string, password: string) {
     const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+    const userData = await this.userService.getUserData(userCredential.user.uid);
+    this.currentUserSubject.next(userData);
     return userCredential.user;
   }
 

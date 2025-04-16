@@ -18,42 +18,61 @@ export class RegisterTeamComponent {
   // Formulario paso 1 (Datos básicos)
   basicForm: FormGroup;
 
-  // Formulario paso 2 (Datos deportivos)
+  // Formulario paso 2 (Datos deportivos y categorías)
   sportsForm: FormGroup;
 
   // Opciones para selects
+  provinces = [
+    'Álava', 'Albacete', 'Alicante', 'Almería', 'Asturias', 'Ávila', 'Badajoz',
+    'Barcelona', 'Burgos', 'Cáceres', 'Cádiz', 'Cantabria', 'Castellón', 'Ciudad Real',
+    'Córdoba', 'Cuenca', 'Gerona', 'Granada', 'Guadalajara', 'Guipúzcoa', 'Huelva',
+    'Huesca', 'Islas Baleares', 'Jaén', 'La Coruña', 'La Rioja', 'Las Palmas', 'León',
+    'Lérida', 'Lugo', 'Madrid', 'Málaga', 'Murcia', 'Navarra', 'Orense', 'Palencia',
+    'Pontevedra', 'Salamanca', 'Segovia', 'Sevilla', 'Soria', 'Tarragona',
+    'Santa Cruz de Tenerife', 'Teruel', 'Toledo', 'Valencia', 'Valladolid',
+    'Vizcaya', 'Zamora', 'Zaragoza'
+  ];
+
   sports = ['Fútbol', 'Baloncesto', 'Voleibol', 'Tenis', 'Pádel'];
-  positions = {
-    'Fútbol': ['Portero', 'Defensa', 'Centrocampista', 'Delantero'],
-    'Baloncesto': ['Base', 'Escolta', 'Alero', 'Ala-pívot', 'Pívot'],
-    'Voleibol': ['Colocador', 'Receptor', 'Central', 'Opuesto', 'Libero'],
-    'Tenis': ['Individual', 'Dobles'],
-    'Pádel': ['Drive', 'Reves']
-  };
+
+  ageCategories = [
+    'Prebenjamín (6-8 años)',
+    'Benjamín (8-10 años)',
+    'Alevín (10-12 años)',
+    'Infantil (12-14 años)',
+    'Cadete (14-16 años)',
+    'Juvenil (16-18 años)',
+    'Senior (+18 años)',
+    'Veterano (+35 años)'
+  ];
+
+  genderCategories = ['Masculino', 'Femenino', 'Mixto'];
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router
   ) {
-    // Paso 1: Datos básicos
+    // Paso 1: Datos básicos del club
     this.basicForm = this.fb.group({
-      firstName: ['', Validators.required],
-      lastName: ['', Validators.required],
+      teamName: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
-      birthDate: ['', Validators.required],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      confirmPassword: ['', Validators.required]
-    }, { validators: this.passwordMatchValidator });
+      confirmPassword: ['', Validators.required],
+      province: ['', Validators.required],
+      city: ['', Validators.required],
+      address: ['', Validators.required]
+    }, { validator: this.passwordMatchValidator });
 
-    // Paso 2: Datos deportivos
+    // Paso 2: Datos deportivos y categorías
     this.sportsForm = this.fb.group({
       sport: ['', Validators.required],
-      position: ['', Validators.required],
-      experienceYears: ['', [Validators.required, Validators.min(0)]],
-      lookingForTeam: [false],
-      profilePicture: [null]
+      teamLogo: [null],
+      categories: this.fb.array([])
     });
+
+    // Añadir una categoría por defecto
+    this.addCategory();
   }
 
   passwordMatchValidator(form: FormGroup) {
@@ -64,15 +83,32 @@ export class RegisterTeamComponent {
   onFileSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
-      this.sportsForm.patchValue({ profilePicture: file });
+      this.sportsForm.patchValue({ teamLogo: file });
     }
+  }
+
+  get categories() {
+    return this.sportsForm.get('categories') as any;
+  }
+
+  addCategory() {
+    const categoryGroup = this.fb.group({
+      ageCategory: ['', Validators.required],
+      gender: ['', Validators.required],
+      teamName: ['']
+    });
+    this.categories.push(categoryGroup);
+  }
+
+  removeCategory(index: number) {
+    this.categories.removeAt(index);
   }
 
   nextStep() {
     if (this.currentStep === 1 && this.basicForm.valid) {
       this.currentStep++;
     } else if (this.currentStep === 2 && this.sportsForm.valid) {
-      this.registerPlayer();
+      this.registerTeam();
     }
   }
 
@@ -80,27 +116,27 @@ export class RegisterTeamComponent {
     this.currentStep--;
   }
 
-  async registerPlayer() {
+  async registerTeam() {
     if (this.basicForm.invalid || this.sportsForm.invalid) return;
 
     const basicData = this.basicForm.value;
     const sportsData = this.sportsForm.value;
 
+    const teamData = {
+      ...basicData,
+      ...sportsData,
+      registrationDate: new Date().toISOString()
+    };
+
     try {
-      await this.authService.registerPlayer(
+      await this.authService.registerTeam(
         basicData,
         sportsData,
         basicData.password
       );
       this.router.navigate(['/feed']);
     } catch (error) {
-      console.error('Error en el registro:', error);
+      console.error('Error en el registro del equipo:', error);
     }
   }
-
-  get currentPositions(): string[] {
-    const sport = this.sportsForm.get('sport')?.value;
-    return this.positions[sport as keyof typeof this.positions] || [];
-  }
-
 }

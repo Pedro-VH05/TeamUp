@@ -1,5 +1,5 @@
 .registration-container {
-  max-width: 800px;
+  max-width: 900px;
   margin: 2rem auto;
   padding: 2rem;
   background: white;
@@ -7,113 +7,52 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.progress-bar {
+.categories-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.category-card {
+  position: relative;
+  padding: 1.5rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: #f9f9f9;
+
+  .remove-btn {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    background: #ea4335;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+
+    &:hover {
+      background: darken(#ea4335, 10%);
+    }
+  }
+}
+
+.add-category-btn {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  padding: 0.75rem 1.5rem;
+  background: #f1f1f1;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  cursor: pointer;
 
-  .progress-step {
-    flex: 1;
-    text-align: center;
-    padding: 0.5rem;
-    border-bottom: 3px solid #ddd;
-    color: #777;
-
-    &.active {
-      border-color: #4285f4;
-      color: #4285f4;
-      font-weight: bold;
-    }
-
-    &.completed {
-      border-color: #34a853;
-      color: #34a853;
-    }
+  &:hover {
+    background: #e1e1e1;
   }
 }
 
-.registration-form {
-  .form-group {
-    margin-bottom: 1.5rem;
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 1rem;
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-
-      input {
-        width: auto;
-        margin-right: 0.5rem;
-      }
-    }
-
-    small {
-      color: #ea4335;
-      font-size: 0.8rem;
-    }
-  }
-
-  .form-actions {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2rem;
-
-    button {
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 4px;
-      background: #4285f4;
-      color: white;
-      font-size: 1rem;
-      cursor: pointer;
-
-      &:disabled {
-        background: #ddd;
-        cursor: not-allowed;
-      }
-
-      &:not(:disabled):hover {
-        background: #3367d6;
-      }
-    }
-  }
-}
-
-.type-selector-container {
-  max-width: 800px;
-  margin: 2rem auto;
-  text-align: center;
-
-  .options {
-    display: flex;
-    gap: 2rem;
-    margin-top: 2rem;
-
-    .option-card {
-      flex: 1;
-      padding: 2rem;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-
-      &:hover {
-        border-color: #4285f4;
-        box-shadow: 0 2px 10px rgba(66, 133, 244, 0.2);
-      }
-    }
-  }
-}
+/* Mantenemos los estilos base del registro */
+@import '../register-player/register-player.component.scss';

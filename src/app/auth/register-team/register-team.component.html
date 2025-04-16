@@ -7,13 +7,13 @@
     </div>
   </div>
 
-  <!-- Paso 1: Datos básicos -->
+  <!-- Paso 1: Datos básicos del club -->
   <form *ngIf="currentStep === 1" [formGroup]="basicForm" class="registration-form">
-    <h2>Datos Personales</h2>
+    <h2>Datos Básicos del Club</h2>
 
     <div class="form-group">
-      <label for="firstName">Nombre del equipo</label>
-      <input type="text" id="firstName" formControlName="firstName">
+      <label for="teamName">Nombre del Club</label>
+      <input type="text" id="teamName" formControlName="teamName">
     </div>
 
     <div class="form-group">
@@ -32,6 +32,26 @@
       <small *ngIf="basicForm.hasError('mismatch')">Las contraseñas no coinciden</small>
     </div>
 
+    <div class="form-group">
+      <label for="province">Provincia</label>
+      <select id="province" formControlName="province">
+        <option value="">Selecciona una provincia</option>
+        <option *ngFor="let province of provinces" [value]="province">
+          {{ province }}
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="city">Localidad</label>
+      <input type="text" id="city" formControlName="city">
+    </div>
+
+    <div class="form-group">
+      <label for="address">Dirección de la sede/pabellón</label>
+      <input type="text" id="address" formControlName="address">
+    </div>
+
     <div class="form-actions">
       <button type="button" (click)="nextStep()" [disabled]="basicForm.invalid">
         Siguiente
@@ -39,9 +59,9 @@
     </div>
   </form>
 
-  <!-- Paso 2: Datos deportivos -->
+  <!-- Paso 2: Datos deportivos y categorías -->
   <form *ngIf="currentStep === 2" [formGroup]="sportsForm" class="registration-form">
-    <h2>Datos Deportivos</h2>
+    <h2>Información Deportiva</h2>
 
     <div class="form-group">
       <label for="sport">Deporte del club</label>
@@ -52,24 +72,49 @@
     </div>
 
     <div class="form-group">
-      <label for="experienceYears">Años de Experiencia</label>
-      <input type="number" id="experienceYears" formControlName="experienceYears" min="0">
+      <label for="teamLogo">Logo del Club</label>
+      <input type="file" id="teamLogo" accept="image/*" (change)="onFileSelected($event)">
     </div>
 
-    <div class="form-group checkbox-group">
-      <input type="checkbox" id="lookingForTeam" formControlName="lookingForTeam">
-      <label for="lookingForTeam">Actualmente buscando equipo</label>
+    <h3>Categorías del Club</h3>
+
+    <div class="categories-container">
+      <div class="category-card" *ngFor="let category of categories.controls; let i = index" [formGroup]="category">
+        <div class="form-group">
+          <label [for]="'ageCategory_' + i">Categoría de Edad</label>
+          <select [id]="'ageCategory_' + i" formControlName="ageCategory">
+            <option value="">Selecciona categoría</option>
+            <option *ngFor="let cat of ageCategories" [value]="cat">{{ cat }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label [for]="'gender_' + i">Género</label>
+          <select [id]="'gender_' + i" formControlName="gender">
+            <option value="">Selecciona género</option>
+            <option *ngFor="let gender of genderCategories" [value]="gender">{{ gender }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label [for]="'teamName_' + i">Nombre específico del equipo (opcional)</label>
+          <input [id]="'teamName_' + i" type="text" formControlName="teamName">
+        </div>
+
+        <button type="button" class="remove-btn" (click)="removeCategory(i)" *ngIf="categories.length > 1">
+          Eliminar
+        </button>
+      </div>
     </div>
 
-    <div class="form-group">
-      <label for="profilePicture">Foto de Perfil</label>
-      <input type="file" id="profilePicture" accept="image/*" (change)="onFileSelected($event)">
-    </div>
+    <button type="button" class="add-category-btn" (click)="addCategory()">
+      + Añadir otra categoría
+    </button>
 
     <div class="form-actions">
       <button type="button" (click)="prevStep()">Anterior</button>
       <button type="button" (click)="nextStep()" [disabled]="sportsForm.invalid">
-        Completar Registro
+        Registrar Club
       </button>
     </div>
   </form>
