@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
+import { Auth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from '@angular/fire/auth';
 import { Router } from '@angular/router';
 import { UserService } from './user.service';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, Observable, take } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
@@ -12,17 +12,55 @@ export class AuthService {
   private router = inject(Router);
   private userService = inject(UserService);
   private currentUserSubject = new BehaviorSubject<any>(null);
+  private authInitialized = false;
 
   constructor() {
-    onAuthStateChanged(this.auth, user => {
-      if (user) {
-        this.userService.getUserData(user.uid).then((userData) => {
-          this.currentUserSubject.next(userData);
-        });
+    this.initializeAuth();
+  }
+
+  private initializeAuth(): void {
+    onAuthStateChanged(this.auth, async (firebaseUser: User | null) => {
+      if (firebaseUser) {
+        try {
+          const userData = await this.userService.getUserData(firebaseUser.uid);
+          if (userData) {
+            console.log('Usuario autenticado:', userData);
+            this.currentUserSubject.next({ ...firebaseUser, ...userData });
+          } else {
+            console.warn('Usuario autenticado pero sin datos en Firestore');
+            this.currentUserSubject.next(null);
+            if (this.router.url.startsWith('/feed')) {
+              this.router.navigate(['/login']);
+            }
+          }
+        } catch (error) {
+          console.error('Error al cargar datos del usuario:', error);
+          this.currentUserSubject.next(null);
+          this.router.navigate(['/login']);
+        }
       } else {
+        console.log('No hay usuario autenticado');
         this.currentUserSubject.next(null);
+        if (this.router.url.startsWith('/feed')) {
+          this.router.navigate(['/login']);
+        }
       }
-    })
+      this.authInitialized = true;
+    });
+  }
+
+  async getCurrentUser(): Promise<any> {
+    if (!this.authInitialized) {
+      await new Promise(resolve => {
+        const sub = this.currentUser$.subscribe(user => {
+          if (this.authInitialized) {
+            sub.unsubscribe();
+            resolve(user);
+          }
+        });
+      });
+    }
+    return this.currentUserSubject.value;
   }
 
   async registerPlayer(basicData: any, additionalData: any, password: string) {
@@ -65,21 +103,31 @@ export class AuthService {
     return userCredential.user;
   }
 
-  // Iniciar Sesión
   async login(email: string, password: string) {
-    const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
-    const userData = await this.userService.getUserData(userCredential.user.uid);
-    this.currentUserSubject.next(userData);
-    return userCredential.user;
+    try {
+      const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
+      const userData = await this.userService.getUserData(userCredential.user.uid);
+
+      if (!userData) {
+        throw new Error('No se encontraron datos de usuario');
+      }
+
+      console.log('Usuario después de login:', userData);
+      this.currentUserSubject.next(userData);
+      return userCredential.user;
+    } catch (error) {
+      console.error('Error en login:', error);
+      throw error;
+    }
   }
 
-  get currentUser$() {
-    return this.currentUserSubject.asObservable();
+  get currentUser$(): Observable<any> {
+    return this.currentUserSubject.asObservable().pipe(distinctUntilChanged());
   }
 
-  // Cerrar Sesión
   async logout() {
     await signOut(this.auth);
+    this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }
 }

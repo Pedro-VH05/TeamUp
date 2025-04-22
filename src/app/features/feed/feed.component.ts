@@ -1,10 +1,11 @@
-import { Component, OnInit, inject } from '@angular/core';
-import { Observable, firstValueFrom, take, switchMap, of, BehaviorSubject } from 'rxjs';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { BehaviorSubject, Subscription, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
 import { Firestore, collection, addDoc, collectionData, query, where, orderBy } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-feed',
@@ -13,31 +14,58 @@ import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage
   templateUrl: './feed.component.html',
   styleUrls: ['./feed.component.scss']
 })
-export class FeedComponent implements OnInit {
+export class FeedComponent implements OnInit, OnDestroy {
   private firestore = inject(Firestore);
   private storage = inject(Storage);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private userSub: Subscription = new Subscription;
 
-  currentUser$: Observable<any>;
   posts$ = new BehaviorSubject<any[]>([]);
+  currentUser: any = null;
   newPostText = '';
   selectedFile: File | null = null;
   selectedFilePreview: string | null = null;
   isLoadingPosts = false;
   isCreatingPost = false;
+  errorMessage: string | null = null;
 
-  constructor(private authService: AuthService) {
-    this.currentUser$ = this.authService.currentUser$;
+  async ngOnInit(): Promise<void> {
+    this.userSub = this.authService.currentUser$.subscribe({
+      next: async (user) => {
+        if (!user) {
+          this.router.navigate(['/login']);
+          return;
+        }
+
+        this.currentUser = user;
+        console.log('Usuario autenticado:', user);
+        await this.loadPosts();
+      },
+      error: (err) => {
+        console.error('Error en suscripción a usuario:', err);
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
-  ngOnInit(): void {
-    this.loadPosts();
+  ngOnDestroy(): void {
+    this.userSub?.unsubscribe();
   }
 
   async loadPosts() {
+    if (!this.currentUser) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     this.isLoadingPosts = true;
+    this.errorMessage = null;
+
     try {
-      const user = await firstValueFrom(this.currentUser$.pipe(take(1)));
-      if (!user?.sport) {
+      const sport = this.currentUser.sport;
+      if (!sport) {
+        this.errorMessage = 'No tienes un deporte asignado';
         this.posts$.next([]);
         return;
       }
@@ -45,15 +73,22 @@ export class FeedComponent implements OnInit {
       const postsRef = collection(this.firestore, 'posts');
       const q = query(
         postsRef,
-        where('sport', '==', user.sport),
+        where('sport', '==', sport),
         orderBy('createdAt', 'desc')
       );
 
-      const postsArray = await firstValueFrom(collectionData(q, { idField: 'id' }));
+      const posts = await firstValueFrom(collectionData(q, { idField: 'id' }));
+      this.posts$.next(posts as any[]);
+    } catch (error: any) {
+      console.error('Error al cargar posts:', error);
+      this.errorMessage = 'Error al cargar publicaciones';
 
-      this.posts$.next(postsArray);
-    } catch (error) {
-      console.error('Error loading posts:', error);
+      if (error.code === 'failed-precondition') {
+        this.errorMessage = 'Configuración incompleta. Por favor intenta más tarde.';
+        console.error('Necesitas crear un índice en Firestore:', error.message);
+      }
+
+      this.posts$.next([]);
     } finally {
       this.isLoadingPosts = false;
     }
@@ -75,15 +110,26 @@ export class FeedComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
+  getDisplayName(user: any): string {
+    return user.type === 'team' ? user.teamName : `${user.firstName} ${user.lastName}`;
+  }
+
+  getProfileImage(user: any): string {
+    return user.type === 'team' ? (user.teamLogoUrl || 'assets/team-default.png') :
+                                (user.profilePictureUrl || 'assets/user-profile.jpg');
+  }
+
   async createPost(): Promise<void> {
     if (this.isCreatingPost) return;
 
     this.isCreatingPost = true;
     try {
-      const user = await firstValueFrom(this.currentUser$.pipe(take(1)));
+      if (!this.currentUser) {
+        this.router.navigate(['/login']);
+        return;
+      }
 
-      if (!user) throw new Error('Usuario no autenticado');
-      if (!user.sport) throw new Error('No tienes deporte asignado');
+      if (!this.currentUser.sport) throw new Error('No tienes deporte asignado');
       if (!this.newPostText.trim()) throw new Error('El texto no puede estar vacío');
 
       let imageUrl = '';
@@ -98,25 +144,24 @@ export class FeedComponent implements OnInit {
         text: this.newPostText,
         imageUrl: imageUrl || null,
         createdAt: new Date().toISOString(),
-        authorId: user.uid,
-        authorName: user.firstName + ' ' + user.lastName || user.teamName || 'Usuario Anónimo',
-        authorPhoto: user.photoURL || user.teamLogoUrl || 'assets/user-profile.jpg',
-        authorType: user.type || 'player',
-        sport: user.sport
+        authorId: this.currentUser.uid,
+        authorName: this.getDisplayName(this.currentUser),
+        authorPhoto: this.getProfileImage(this.currentUser),
+        authorType: this.currentUser.type || 'player',
+        sport: this.currentUser.sport
       };
 
       const postsRef = collection(this.firestore, 'posts');
       await addDoc(postsRef, postData);
 
-      // Recargar posts después de crear uno nuevo
-      this.loadPosts();
+      await this.loadPosts();
 
-      // Resetear formulario
       this.newPostText = '';
       this.selectedFile = null;
       this.selectedFilePreview = null;
     } catch (error) {
       console.error('Error al crear el post:', error);
+      this.errorMessage = 'Error al crear la publicación';
     } finally {
       this.isCreatingPost = false;
     }
