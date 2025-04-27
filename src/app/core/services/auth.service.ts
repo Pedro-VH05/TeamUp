@@ -39,7 +39,6 @@ export class AuthService {
           this.router.navigate(['/login']);
         }
       } else {
-        console.log('No hay usuario autenticado');
         this.currentUserSubject.next(null);
         if (this.router.url.startsWith('/feed')) {
           this.router.navigate(['/login']);

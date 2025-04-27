@@ -1,0 +1,100 @@
+<div class="landing-container">
+  <!-- Header idéntico al del feed -->
+  <header class="header">
+    <div class="logo-section">
+      <img src="assets/logo.png" alt="Logo" class="logo">
+      <span class="app-name">TeamUp</span>
+    </div>
+
+    <div class="header-actions">
+      <input type="text" placeholder="Buscar..." class="search-bar">
+      <button class="messages-btn" (click)="navigateToFeed()">Feed</button>
+    </div>
+
+    <div class="user-profile" *ngIf="currentUser">
+      <img [src]="getProfileImage(currentUser)"
+           alt="User Profile"
+           class="profile-pic">
+      <span class="username">
+        {{ getDisplayName(currentUser) }}
+      </span>
+    </div>
+  </header>
+
+  <!-- Contenido de mensajes -->
+  <main class="messages-content">
+    <div class="messages-container">
+      <div class="conversations-list">
+        <h2>Conversaciones</h2>
+
+        @if (conversations$ | async; as conversations) {
+          @for (conv of conversations; track conv.id) {
+            <div class="conversation-item"
+                 [class.selected]="selectedConversation === conv.id"
+                 (click)="selectConversation(conv.id)">
+              <img [src]="conv.userPhoto" alt="Profile" class="conversation-photo">
+              <div class="conversation-info">
+                <span class="conversation-name">{{ conv.userName }}</span>
+                <span class="conversation-preview">{{ conv.lastMessage | slice:0:30 }}{{ conv.lastMessage.length > 30 ? '...' : '' }}</span>
+              </div>
+              <div class="conversation-meta">
+                @if (conv.lastMessageTime) {
+                  <span class="conversation-time">{{ conv.lastMessageTime.toDate() | date:'shortTime' }}</span>
+                }
+                @if (conv.unreadCount > 0) {
+                  <span class="unread-count">{{ conv.unreadCount }}</span>
+                }
+              </div>
+            </div>
+          } @empty {
+            <p class="no-conversations">No tienes conversaciones</p>
+          }
+        } @else {
+          <p class="loading">Cargando conversaciones...</p>
+        }
+      </div>
+
+      <div class="messages-view" *ngIf="selectedConversation">
+        @if (messages$ | async; as messages) {
+          <div class="messages-scroll">
+            @for (msg of messages; track msg.id) {
+              <div class="message" [class.sent]="msg.senderId === currentUser?.uid">
+                @if (msg.senderId !== currentUser?.uid) {
+                  <img [src]="msg.senderPhoto" alt="Sender" class="message-photo">
+                }
+                <div class="message-content">
+                  <p>{{ msg.text }}</p>
+                  @if (msg.timestamp) {
+                    <span class="message-time">{{ msg.timestamp.toDate() | date:'shortTime' }}</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="loading">Cargando mensajes...</p>
+        }
+
+        <div class="message-input">
+          <input [(ngModel)]="newMessage" placeholder="Escribe un mensaje..." (keyup.enter)="sendMessage()">
+          <button (click)="sendMessage()">Enviar</button>
+        </div>
+      </div>
+
+      @if (!selectedConversation) {
+        <div class="no-conversation-selected">
+          <p>Selecciona una conversación para comenzar a chatear</p>
+        </div>
+      }
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
+    <div class="footer-links">
+      <a href="#">Términos y condiciones</a>
+      <a href="#">Política de privacidad</a>
+      <a href="#">Contacto</a>
+    </div>
+  </footer>
+</div>

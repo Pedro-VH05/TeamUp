@@ -119,6 +119,10 @@ export class FeedComponent implements OnInit, OnDestroy {
                                 (user.profilePictureUrl || 'assets/user-profile.jpg');
   }
 
+  navigateToMessages(): void {
+    this.router.navigate(['/messages']);
+  }
+
   async createPost(): Promise<void> {
     if (this.isCreatingPost) return;
 

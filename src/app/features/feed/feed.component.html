@@ -7,7 +7,7 @@
 
     <div class="header-actions">
       <input type="text" placeholder="Buscar..." class="search-bar">
-      <button class="messages-btn">Mensajes</button>
+      <button class="messages-btn" (click)="navigateToMessages()">Mensajes</button>
     </div>
 
     <div class="user-profile" *ngIf="currentUser">
