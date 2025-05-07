@@ -1,5 +1,4 @@
 <div class="landing-container">
-  <!-- Header idéntico al del feed -->
   <header class="header">
     <div class="logo-section">
       <img src="assets/logo.png" alt="Logo" class="logo">
@@ -21,7 +20,6 @@
     </div>
   </header>
 
-  <!-- Contenido de mensajes -->
   <main class="messages-content">
     <div class="messages-container">
       <div class="conversations-list">
@@ -81,9 +79,19 @@
         </div>
       </div>
 
-      @if (!selectedConversation) {
+      @if (!selectedConversation && !recipientId) {
         <div class="no-conversation-selected">
           <p>Selecciona una conversación para comenzar a chatear</p>
+        </div>
+      }
+
+      @if (recipientId && !selectedConversation) {
+        <div class="no-conversation-selected">
+          @if (isLoading) {
+            <p>Creando nueva conversación...</p>
+          } @else {
+            <p>No se pudo crear la conversación</p>
+          }
         </div>
       }
     </div>

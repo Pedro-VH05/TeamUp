@@ -123,6 +123,10 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.router.navigate(['/messages']);
   }
 
+  viewProfile(authorId: string, authorType: string): void {
+    this.router.navigate(['/profile', authorType, authorId]);
+  }
+
   async createPost(): Promise<void> {
     if (this.isCreatingPost) return;
 

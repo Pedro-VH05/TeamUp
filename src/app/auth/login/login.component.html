@@ -1,15 +1,31 @@
 <div class="auth-container">
-  <div class="form-box">
-    <h2>Iniciar sesión</h2>
-    <form [formGroup]="loginForm" (ngSubmit)="login()">
-      <div class="form-control">
-        <input type="email" formControlName="email" placeholder="Correo electrónico" />
+  <div class="main-box">
+    <div class="left-column">
+      <div class="carousel">
+        <img src="baloncesto.webp" alt="Baloncesto" class="carousel-image">
+        <img src="balonmano.webp" alt="Balonmano" class="carousel-image">
+        <img src="futbol.jpg" alt="Fútbol" class="carousel-image">
+        <img src="rugby.jpg" alt="Rugby" class="carousel-image">
+        <img src="voleibol.jpg" alt="Voleibol" class="carousel-image">
       </div>
-      <div class="form-control">
-        <input type="password" formControlName="password" placeholder="Contraseña" />
+    </div>
+
+    <div class="right-column">
+      <div class="form-box">
+        <h2>Inicia sesión</h2>
+        <form [formGroup]="loginForm" (ngSubmit)="login()">
+          <div class="form-control">
+            <input type="email" id="email" formControlName="email" placeholder="Correo electrónico" />
+          </div>
+          <div class="form-control">
+            <input type="password" id="password" formControlName="password" placeholder="Contraseña" />
+          </div>
+          <div class="bottom-box">
+            <p class="register-link">¿No tienes una cuenta? <a (click)="goToRegister()">Crea tu cuenta</a></p>
+            <button type="submit" class="login-btn">Iniciar sesión</button>
+          </div>
+        </form>
       </div>
-      <button type="submit">Entrar</button>
-    </form>
-    <p>No tienes cuenta? <a href="register">Registrate aquí</a></p>
+    </div>
   </div>
 </div>

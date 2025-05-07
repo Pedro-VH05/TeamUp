@@ -1,10 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../core/services/auth.service';
-import { Observable, map } from 'rxjs';
+import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 
 interface Message {
   id?: string;
@@ -33,24 +33,104 @@ interface Conversation {
   templateUrl: './messages.component.html',
   styleUrls: ['./messages.component.scss']
 })
-export class MessagesComponent implements OnInit {
+export class MessagesComponent implements OnInit, OnDestroy {
   private firestore = inject(Firestore);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+  private routeSub!: Subscription;
 
   currentUser: any;
   conversations$: Observable<Conversation[]> | undefined;
   selectedConversation: string | null = null;
   messages$: Observable<Message[]> | undefined;
   newMessage = '';
+  recipientId: string | null = null;
+  isLoading = false;
 
   ngOnInit(): void {
+    this.routeSub = this.route.queryParams.subscribe(params => {
+      this.recipientId = params['recipient'] || null;
+
+      if (this.recipientId && this.currentUser) {
+        this.findOrCreateConversation(this.currentUser.uid, this.recipientId);
+      }
+    });
+
     this.authService.currentUser$.subscribe(user => {
       if (!user) return;
 
       this.currentUser = user;
       this.loadConversations(user.uid, user.sport);
+
+      if (this.recipientId) {
+        this.findOrCreateConversation(user.uid, this.recipientId);
+      }
     });
+  }
+
+  ngOnDestroy(): void {
+    this.routeSub?.unsubscribe();
+  }
+
+  async findOrCreateConversation(currentUserId: string, recipientId: string): Promise<void> {
+    this.isLoading = true;
+    try {
+      const conversationsRef = collection(this.firestore, 'conversations');
+      const q = query(
+        conversationsRef,
+        where('participants', 'array-contains', currentUserId)
+      );
+
+      const conversations = await firstValueFrom(collectionData(q, { idField: 'id' }));
+      const existingConv = conversations.find(conv =>
+        conv['participants'].includes(recipientId)
+      );
+
+      if (existingConv) {
+        this.selectConversation(existingConv.id);
+      } else {
+        await this.createNewConversation(currentUserId, recipientId);
+      }
+    } catch (error) {
+      console.error('Error finding or creating conversation:', error);
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  async createNewConversation(currentUserId: string, recipientId: string): Promise<void> {
+    try {
+      const recipientDoc = await getDoc(doc(this.firestore, 'users', recipientId));
+      const recipientData = recipientDoc.data();
+
+      const conversationData = {
+        participants: [currentUserId, recipientId],
+        participantNames: {
+          [currentUserId]: this.getDisplayName(this.currentUser),
+          [recipientId]: recipientData ? this.getDisplayName(recipientData) : 'Usuario'
+        },
+        participantPhotos: {
+          [currentUserId]: this.getProfileImage(this.currentUser),
+          [recipientId]: recipientData ? this.getProfileImage(recipientData) : 'assets/user-profile.jpg'
+        },
+        lastMessage: '',
+        lastMessageTime: null,
+        unreadCounts: {
+          [currentUserId]: 0,
+          [recipientId]: 0
+        },
+        sport: this.currentUser.sport,
+        createdAt: serverTimestamp()
+      };
+
+      const conversationsRef = collection(this.firestore, 'conversations');
+      const newConvRef = await addDoc(conversationsRef, conversationData);
+      this.selectConversation(newConvRef.id);
+    } catch (error) {
+      console.error('Error creating new conversation:', error);
+      throw error;
+    }
   }
 
   loadConversations(currentUserId: string, sport: string): void {
@@ -82,6 +162,7 @@ export class MessagesComponent implements OnInit {
 
   selectConversation(conversationId: string): void {
     this.selectedConversation = conversationId;
+    this.recipientId = null;
 
     const messagesRef = collection(this.firestore, 'conversations', conversationId, 'messages');
     this.messages$ = collectionData(
@@ -102,16 +183,20 @@ export class MessagesComponent implements OnInit {
       sport: this.currentUser.sport
     };
 
-    const messagesRef = collection(this.firestore, 'conversations', this.selectedConversation, 'messages');
-    await addDoc(messagesRef, messageData);
+    try {
+      const messagesRef = collection(this.firestore, 'conversations', this.selectedConversation, 'messages');
+      await addDoc(messagesRef, messageData);
 
-    const conversationRef = doc(this.firestore, 'conversations', this.selectedConversation);
-    await setDoc(conversationRef, {
-      lastMessage: this.newMessage,
-      lastMessageTime: serverTimestamp()
-    }, { merge: true });
+      const conversationRef = doc(this.firestore, 'conversations', this.selectedConversation);
+      await setDoc(conversationRef, {
+        lastMessage: this.newMessage,
+        lastMessageTime: serverTimestamp()
+      }, { merge: true });
 
-    this.newMessage = '';
+      this.newMessage = '';
+    } catch (error) {
+      console.error('Error sending message:', error);
+    }
   }
 
   getDisplayName(user: any): string {

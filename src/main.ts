@@ -10,7 +10,6 @@ import { provideFirestore, getFirestore } from '@angular/fire/firestore';
 import { environment } from './app/environments/environment';
 import { getStorage, provideStorage } from '@angular/fire/storage';
 
-
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),

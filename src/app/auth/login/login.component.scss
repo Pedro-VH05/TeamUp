@@ -2,60 +2,150 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background: linear-gradient(to right, #667eea, #764ba2);
+  height: 91vh;
+  background: #f2ac29;
+  padding: 2rem;
+  font-family: 'Zain', sans-serif;
 
-  .form-box {
-    background: #fff;
-    padding: 2rem;
+  .main-box {
+    display: flex;
+    width: 900px;
+    height: 600px;
+    background: #fffbf5;
     border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    width: 100%;
-    max-width: 400px;
+    box-shadow: 0 4px 20px rgba(9, 7, 4, 0.421);
+    overflow: hidden;
 
-    h2 {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      color: #333;
-    }
+    .left-column {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      padding: 0;
 
-    .form-control {
-      margin-bottom: 1rem;
-
-      input {
+      .carousel {
+        position: relative;
         width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        font-size: 1rem;
+        height: 100%;
+
+        img {
+          position: absolute;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          opacity: 0;
+          animation: fadeCarousel 25s infinite;
+        }
+
+        img:nth-child(1) { animation-delay: 0s; }
+        img:nth-child(2) { animation-delay: 5s; }
+        img:nth-child(3) { animation-delay: 10s; }
+        img:nth-child(4) { animation-delay: 15s; }
+        img:nth-child(5) { animation-delay: 20s; }
+      }
+
+      .logo-container {
+        position: absolute;
+        top: 2rem;
+        left: 0;
+        right: 0;
+        text-align: center;
+        z-index: 2;
+
+        .logo {
+          height: 50px;
+          width: auto;
+        }
       }
     }
 
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      background-color: #667eea;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: background-color 0.3s;
+    .right-column {
+      flex: 1;
+      padding: 3rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
 
-      &:hover {
-        background-color: #5a67d8;
-      }
-    }
+      .form-box {
+        width: 100%;
+        max-width: 340px;
 
-    .switch-link {
-      margin-top: 1rem;
-      text-align: center;
+        h2 {
+          text-align: left;
+          margin-bottom: 0.5rem;
+          color: #f2ac29;
+          font-size: 3rem;
+          font-weight: 700;
+        }
 
-      a {
-        color: #333;
-        text-decoration: underline;
-        font-size: 0.9rem;
+        .form-control {
+          margin-bottom: 1.5rem;
+
+          input {
+            width: 100%;
+            padding: 0.55rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1.3rem;
+            transition: border-color 0.3s;
+            font-family: 'Zain', sans-serif;
+            line-height: 1;
+            caret-color: #f2ac29;
+
+            &:focus {
+              outline: none;
+              border-color: #f2ac29;
+            }
+          }
+        }
+
+        .bottom-box {
+          margin-top: 2rem;
+        }
+
+        .login-btn {
+          width: 100%;
+          padding: 0.75rem;
+          background-color: #f2ac29;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 1rem;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background-color 0.3s;
+          margin-top: 0.5rem;
+
+          &:hover {
+            background-color: #c7922e;
+          }
+        }
+
+        .register-link {
+          margin-top: 1.5rem;
+          text-align: left;
+          color: #f2ac29;
+          font-size: 1.3rem;
+
+          a {
+            color: #6FA696;
+            text-decoration: none;
+            font-weight: 500;
+            cursor: pointer;
+
+            &:hover {
+              text-decoration: underline;
+            }
+          }
+        }
       }
     }
   }
+}
+
+@keyframes fadeCarousel {
+  0% { opacity: 0; }
+  4% { opacity: 1; }
+  20% { opacity: 1; }
+  24% { opacity: 0; }
+  100% { opacity: 0; }
 }

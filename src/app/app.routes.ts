@@ -4,6 +4,7 @@ import { RegisterPlayerComponent } from './auth/register-player/register-player.
 import { UserTypeSelectorComponent } from './auth/register-player/user-type-selector/user-type-selector.component';
 import { RegisterTeamComponent } from './auth/register-team/register-team.component';
 import { AuthGuard } from './core/guard/auth.guard';
+import { ProfileComponent } from './features/profile/profile.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -20,6 +21,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/messages/messages.component').then(m => m.MessagesComponent),
     canActivate: [AuthGuard]
   },
-  { path: '**', redirectTo: 'login' },
-  { path: '', redirectTo: 'login', pathMatch: 'full' }
+  {
+    path: 'profile/:id',
+    component: ProfileComponent,
+    canActivate: [AuthGuard]
+  },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', redirectTo: 'login' }
 ];
