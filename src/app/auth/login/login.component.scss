@@ -36,7 +36,10 @@
           animation: fadeCarousel 25s infinite;
         }
 
-        img:nth-child(1) { animation-delay: 0s; }
+        img:nth-child(1) {
+          opacity: 1;
+          animation: none;
+        }
         img:nth-child(2) { animation-delay: 5s; }
         img:nth-child(3) { animation-delay: 10s; }
         img:nth-child(4) { animation-delay: 15s; }
@@ -81,7 +84,7 @@
           margin-bottom: 1.5rem;
 
           input {
-            width: 100%;
+            width: 94.5%;
             padding: 0.55rem;
             border: 1px solid #ddd;
             border-radius: 6px;

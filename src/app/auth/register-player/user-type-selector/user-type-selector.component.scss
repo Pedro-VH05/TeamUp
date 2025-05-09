@@ -1,0 +1,55 @@
+.type-selector-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 91vh;
+  background: #f2ac29;
+  padding: 2rem;
+  font-family: 'Zain', sans-serif;
+
+  h2 {
+    color: #fffbf5;
+    font-size: 3rem;
+    margin-bottom: 2rem;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .options {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    width: 100%;
+    max-width: 900px;
+
+    .option-card {
+      background: #fffbf5;
+      border-radius: 12px;
+      padding: 2rem;
+      width: 100%;
+      max-width: 400px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 20px rgba(9, 7, 4, 0.2);
+
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 25px rgba(9, 7, 4, 0.3);
+      }
+
+      h3 {
+        color: #f2ac29;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+      }
+
+      p {
+        color: #333;
+        font-size: 1.3rem;
+        line-height: 1.4;
+      }
+    }
+  }
+}
