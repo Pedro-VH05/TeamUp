@@ -10,11 +10,22 @@
       <button class="messages-btn" (click)="navigateToMessages()">Mensajes</button>
     </div>
 
-    <div class="user-profile" *ngIf="currentUser">
+    <div class="user-profile" *ngIf="currentUser" (click)="toggleProfileMenu($event)">
       <img [src]="getProfileImage(currentUser)" alt="User Profile" class="profile-pic">
       <span class="username">
         {{ getDisplayName(currentUser) }}
       </span>
+
+      <div class="profile-menu" *ngIf="showProfileMenu" (click)="$event.stopPropagation()">
+        <div class="menu-item" (click)="viewProfile(currentUser.uid, currentUser.type); $event.stopPropagation()">
+          <span class="menu-icon"><i class="fas fa-user"></i></span>
+          <span>Ver mi perfil</span>
+        </div>
+        <div class="menu-item" (click)="logout(); $event.stopPropagation()">
+          <span class="menu-icon"><i class="fas fa-sign-out-alt"></i></span>
+          <span>Cerrar sesión</span>
+        </div>
+      </div>
     </div>
   </header>
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, HostListener, ElementRef } from '@angular/core';
 import { BehaviorSubject, Subscription, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
@@ -20,6 +20,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   private authService = inject(AuthService);
   private router = inject(Router);
   private userSub: Subscription = new Subscription;
+  private elementRef!: ElementRef;
 
   posts$ = new BehaviorSubject<any[]>([]);
   currentUser: any = null;
@@ -29,6 +30,8 @@ export class FeedComponent implements OnInit, OnDestroy {
   isLoadingPosts = false;
   isCreatingPost = false;
   errorMessage: string | null = null;
+  showProfileMenu = false;
+
 
   async ngOnInit(): Promise<void> {
     this.userSub = this.authService.currentUser$.subscribe({
@@ -127,6 +130,18 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.router.navigate(['/profile', authorType, authorId]);
   }
 
+  toggleProfileMenu(event: Event): void {
+    event.stopPropagation();
+    this.showProfileMenu = !this.showProfileMenu;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onClickOutside(event: Event): void {
+    if (!this.elementRef.nativeElement.contains(event.target)) {
+      this.showProfileMenu = false;
+    }
+  }
+
   async createPost(): Promise<void> {
     if (this.isCreatingPost) return;
 
@@ -172,6 +187,15 @@ export class FeedComponent implements OnInit, OnDestroy {
       this.errorMessage = 'Error al crear la publicación';
     } finally {
       this.isCreatingPost = false;
+    }
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.authService.logout();
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
     }
   }
 }
