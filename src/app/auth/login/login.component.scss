@@ -3,9 +3,14 @@
   justify-content: center;
   align-items: center;
   height: 91vh;
-  background: #f2ac29;
   padding: 2rem;
   font-family: 'Zain', sans-serif;
+  border: 1px white;
+  background: #f2ac29;
+  background-image: url('/fondo.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 
   .main-box {
     display: flex;
@@ -40,10 +45,22 @@
           opacity: 1;
           animation: none;
         }
-        img:nth-child(2) { animation-delay: 5s; }
-        img:nth-child(3) { animation-delay: 10s; }
-        img:nth-child(4) { animation-delay: 15s; }
-        img:nth-child(5) { animation-delay: 20s; }
+
+        img:nth-child(2) {
+          animation-delay: 5s;
+        }
+
+        img:nth-child(3) {
+          animation-delay: 10s;
+        }
+
+        img:nth-child(4) {
+          animation-delay: 15s;
+        }
+
+        img:nth-child(5) {
+          animation-delay: 20s;
+        }
       }
 
       .logo-container {
@@ -71,6 +88,27 @@
       .form-box {
         width: 100%;
         max-width: 340px;
+
+        .logo-header {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 2rem;
+          gap: 1rem;
+
+          .app-logo {
+            width: 200px;
+            height: auto;
+            fill: #f2ac29;
+          }
+
+          .app-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #f2ac29;
+            font-family: 'Zain', sans-serif;
+          }
+        }
 
         h2 {
           text-align: left;
@@ -146,9 +184,23 @@
 }
 
 @keyframes fadeCarousel {
-  0% { opacity: 0; }
-  4% { opacity: 1; }
-  20% { opacity: 1; }
-  24% { opacity: 0; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 0;
+  }
+
+  4% {
+    opacity: 1;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  24% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
