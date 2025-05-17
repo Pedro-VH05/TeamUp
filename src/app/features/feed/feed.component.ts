@@ -126,20 +126,13 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.router.navigate(['/messages']);
   }
 
-  viewProfile(authorId: string, authorType: string): void {
-    this.router.navigate(['/profile', authorType, authorId]);
+  viewProfile(authorId: string): void {
+    this.router.navigate(['/profile', authorId]);
   }
 
   toggleProfileMenu(event: Event): void {
     event.stopPropagation();
     this.showProfileMenu = !this.showProfileMenu;
-  }
-
-  @HostListener('document:click', ['$event'])
-  onClickOutside(event: Event): void {
-    if (!this.elementRef.nativeElement.contains(event.target)) {
-      this.showProfileMenu = false;
-    }
   }
 
   async createPost(): Promise<void> {

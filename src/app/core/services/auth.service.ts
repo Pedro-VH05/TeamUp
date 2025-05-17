@@ -18,31 +18,25 @@ export class AuthService {
     this.initializeAuth();
   }
 
+  // En AuthService
   private initializeAuth(): void {
     onAuthStateChanged(this.auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
         try {
           const userData = await this.userService.getUserData(firebaseUser.uid);
           if (userData) {
-            console.log('Usuario autenticado:', userData);
             this.currentUserSubject.next({ ...firebaseUser, ...userData });
           } else {
             console.warn('Usuario autenticado pero sin datos en Firestore');
             this.currentUserSubject.next(null);
-            if (this.router.url.startsWith('/feed')) {
-              this.router.navigate(['/login']);
-            }
+            // Elimina la redirección automática aquí
           }
         } catch (error) {
           console.error('Error al cargar datos del usuario:', error);
           this.currentUserSubject.next(null);
-          this.router.navigate(['/login']);
         }
       } else {
         this.currentUserSubject.next(null);
-        if (this.router.url.startsWith('/feed')) {
-          this.router.navigate(['/login']);
-        }
       }
       this.authInitialized = true;
     });

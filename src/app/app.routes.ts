@@ -14,7 +14,6 @@ export const routes: Routes = [
   {
     path: 'feed',
     loadComponent: () => import('./features/feed/feed.component').then(m => m.FeedComponent),
-    canActivate: [AuthGuard]
   },
   {
     path: 'messages',
@@ -24,7 +23,6 @@ export const routes: Routes = [
   {
     path: 'profile/:id',
     component: ProfileComponent,
-    canActivate: [AuthGuard]
   },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' }

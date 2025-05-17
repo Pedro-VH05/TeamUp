@@ -1,15 +1,12 @@
-<div class="profile-container">
-  <div *ngIf="isLoading" class="loading">Cargando perfil...</div>
+<div class="profile-modal-overlay" *ngIf="profile && !isLoading" [class.active]="isModalOpen">
+  <div class="profile-modal">
+    <button class="close-btn" (click)="closeModal()">×</button>
 
-  <div *ngIf="error" class="error">{{ error }}</div>
-
-  <div *ngIf="profile && !isLoading">
     <div class="profile-header">
       <img [src]="isTeam ? (profile.teamLogoUrl || 'assets/team-default.png') :
                           (profile.profilePictureUrl || 'assets/user-profile.jpg')"
            alt="Profile picture"
            class="profile-picture">
-
       <h1>{{ isTeam ? profile.teamName : profile.firstName + ' ' + profile.lastName }}</h1>
       <button class="message-btn" (click)="navigateToMessages(profile.uid || profile.id)">
         Enviar mensaje
@@ -43,3 +40,6 @@
     </div>
   </div>
 </div>
+
+<div *ngIf="isLoading" class="loading">Cargando perfil...</div>
+<div *ngIf="error" class="error">{{ error }}</div>

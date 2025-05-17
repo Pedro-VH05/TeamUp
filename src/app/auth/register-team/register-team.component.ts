@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { AngularFireStorage } from '@angular/fire/compat/storage';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-register-team',
@@ -14,6 +16,8 @@ import { CommonModule } from '@angular/common';
 export class RegisterTeamComponent {
   currentStep = 1;
   totalSteps = 2;
+  selectedFile: File | null = null;
+  uploadPercent: number | undefined;
 
   // Formulario paso 1 (Datos básicos)
   basicForm: FormGroup;
@@ -51,7 +55,8 @@ export class RegisterTeamComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private storage: AngularFireStorage
   ) {
     // Paso 1: Datos básicos del club
     this.basicForm = this.fb.group({
@@ -78,13 +83,6 @@ export class RegisterTeamComponent {
   passwordMatchValidator(form: FormGroup) {
     return form.get('password')?.value === form.get('confirmPassword')?.value
       ? null : { mismatch: true };
-  }
-
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.sportsForm.patchValue({ teamLogo: file });
-    }
   }
 
   get categories() {
@@ -116,22 +114,65 @@ export class RegisterTeamComponent {
     this.currentStep--;
   }
 
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file;
+    }
+  }
+
   async registerTeam() {
     if (this.basicForm.invalid || this.sportsForm.invalid) return;
 
     const basicData = this.basicForm.value;
     const sportsData = this.sportsForm.value;
 
+    // Si hay un archivo seleccionado, subirlo primero
+    if (this.selectedFile) {
+      try {
+        const filePath = `team-logos/${new Date().getTime()}_${this.selectedFile.name}`;
+        const fileRef = this.storage.ref(filePath);
+        const task = this.storage.upload(filePath, this.selectedFile);
+
+        // Opcional: Mostrar progreso de subida
+        task.percentageChanges().subscribe(percent => {
+          this.uploadPercent = percent;
+        });
+
+        // Esperar a que termine la subida
+        await task.snapshotChanges().pipe(
+          finalize(() => {
+            fileRef.getDownloadURL().subscribe(url => {
+              // Una vez que tenemos la URL, proceder con el registro
+              this.completeRegistration(basicData, sportsData, url);
+            });
+          })
+        ).toPromise();
+
+      } catch (error) {
+        console.error('Error al subir el archivo:', error);
+        return;
+      }
+    } else {
+      // Si no hay archivo, proceder sin logo
+      this.completeRegistration(basicData, sportsData, null);
+    }
+  }
+
+  private async completeRegistration(basicData: any, sportsData: any, logoUrl: string | null) {
+    delete sportsData.teamLogo;
+
     const teamData = {
       ...basicData,
       ...sportsData,
+      teamLogo: logoUrl,
       registrationDate: new Date().toISOString()
     };
 
     try {
       await this.authService.registerTeam(
         basicData,
-        sportsData,
+        { ...sportsData, teamLogo: logoUrl },
         basicData.password
       );
       this.router.navigate(['/feed']);

@@ -17,7 +17,7 @@
       </span>
 
       <div class="profile-menu" *ngIf="showProfileMenu" (click)="$event.stopPropagation()">
-        <div class="menu-item" (click)="viewProfile(currentUser.uid, currentUser.type); $event.stopPropagation()">
+        <div class="menu-item" (click)="viewProfile(currentUser.uid); $event.stopPropagation()">
           <span class="menu-icon"><i class="fas fa-user"></i></span>
           <span>Ver mi perfil</span>
         </div>
@@ -63,7 +63,7 @@
               alt="Author" class="post-author-img">
             <div class="post-author-info">
               <div class="author-name-container">
-                <span class="post-author-name" (click)="viewProfile(post.authorId, post.authorType)">
+                <span class="post-author-name" (click)="viewProfile(post.authorId)">
                   {{ post.authorName }}
                 </span>
                 <span class="author-type-badge" [class.player]="post.authorType === 'player'"

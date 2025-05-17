@@ -22,53 +22,51 @@ export class ProfileComponent implements OnInit {
   isLoading = true;
   error: string | null = null;
   currentUser: any;
+  isModalOpen = true; // Controla la visibilidad del modal
 
   async ngOnInit() {
     try {
-      // Verifica autenticación primero
-      const user = await firstValueFrom(this.authService.currentUser$);
-      console.log(user);
-      if (!user) {
-        console.log('No hay usuario autenticado, redirigiendo...');
+      // Espera a que la autenticación se inicialice
+      this.currentUser = await this.authService.getCurrentUser();
+
+      if (!this.currentUser) {
         this.router.navigate(['/login'], {
           queryParams: { returnUrl: this.router.url }
         });
         return;
       }
 
-      this.currentUser = user;
-      console.log('Usuario autenticado:', user.uid); // Depuración
-
       const { id } = this.route.snapshot.params;
-      console.log('ID de perfil solicitado:', id); // Depuración
-
       const docRef = doc(this.firestore, 'users', id);
       const docSnap = await getDoc(docRef);
 
       if (docSnap.exists()) {
-        console.log('Perfil encontrado:', docSnap.id); // Depuración
         this.profile = {
           ...docSnap.data(),
           id: docSnap.id,
           uid: docSnap.id
         };
       } else {
-        console.log('Perfil no existe'); // Depuración
         this.error = 'Perfil no encontrado';
       }
     } catch (err) {
-      console.error('Error en profile component:', err); // Depuración
+      console.error('Error en profile component:', err);
       this.error = 'Error al cargar el perfil';
     } finally {
       this.isLoading = false;
     }
   }
 
+  closeModal(): void {
+    this.isModalOpen = false;
+    // Opcional: navegar a una ruta diferente o cerrar completamente
+    this.router.navigate(['..'], { relativeTo: this.route });
+  }
+
   navigateToMessages(userId: string): void {
     this.router.navigate(['/messages'], { queryParams: { recipient: userId } });
   }
 
-  // Helper para determinar si es equipo
   get isTeam(): boolean {
     return this.profile?.type === 'team';
   }
