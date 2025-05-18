@@ -2,19 +2,23 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: #f2ac29;
+  background-image: url('/fondo-blanco.jpg');
+  background-size: 70rem;
+  background-position: initial;
+  font-family: 'Zain', sans-serif;
 }
-
-// =================== HEADER ===================
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 100;
+  padding: 1rem 2rem;
+  background-color: #fffbf5;
+  box-shadow: 0 4px 20px rgba(9, 7, 4, 0.421);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 
   .logo-section {
     display: flex;
@@ -28,7 +32,7 @@
     .app-name {
       font-size: 1.5rem;
       font-weight: bold;
-      color: #333;
+      color: #f2ac29;
     }
   }
 
@@ -44,25 +48,27 @@
       min-width: 250px;
       font-size: 0.9rem;
       transition: border-color 0.3s;
+      font-family: 'Zain', sans-serif;
 
       &:focus {
         outline: none;
-        border-color: #4285f4;
+        border-color: #f2ac29;
       }
     }
 
     .messages-btn {
       padding: 0.5rem 1.5rem;
-      background-color: #4285f4;
+      background-color: #f2ac29;
       color: white;
       border: none;
       border-radius: 20px;
       cursor: pointer;
-      font-weight: 500;
+      font-weight: 600;
       transition: background-color 0.3s;
+      font-family: 'Zain', sans-serif;
 
       &:hover {
-        background-color: #3367d6;
+        background-color: #c7922e;
       }
     }
   }
@@ -78,7 +84,7 @@
     transition: background-color 0.3s;
 
     &:hover {
-      background-color: #f5f5f5;
+      background-color: rgba(242, 172, 41, 0.1);
     }
 
     .profile-pic {
@@ -86,11 +92,11 @@
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
-      border: 2px solid #f1f1f1;
+      border: 2px solid #f2ac29;
     }
 
     .username {
-      font-weight: 500;
+      font-weight: 600;
       color: #333;
     }
 
@@ -98,40 +104,34 @@
       position: absolute;
       top: 100%;
       right: 0;
-      background-color: white;
+      background-color: #fffbf5;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 20px rgba(9, 7, 4, 0.421);
       min-width: 220px;
       z-index: 1000;
       margin-top: 10px;
       overflow: hidden;
-      transform-origin: top right;
       animation: fadeIn 0.2s ease-out forwards;
-      opacity: 0;
-      transform: scale(0.95);
 
       .menu-item {
         padding: 0.75rem 1.25rem;
         display: flex;
         align-items: center;
         gap: 0.75rem;
-        transition: background-color 0.2s;
+        transition: all 0.3s;
         color: #333;
         font-size: 0.95rem;
+        font-family: 'Zain', sans-serif;
 
         &:hover {
-          background-color: #f8f8f8;
-          color: #4285f4;
+          background-color: rgba(242, 172, 41, 0.1);
+          color: #f2ac29;
         }
 
         .menu-icon {
           width: 20px;
           text-align: center;
-          color: #666;
-
-          i {
-            font-size: 0.9rem;
-          }
+          color: #f2ac29;
         }
 
         &:last-child {
@@ -150,12 +150,13 @@
   }
 }
 
-// =================== CONTENT ===================
-
 .content {
   flex: 1;
   padding: 2rem;
-  background-color: #f5f5f5;
+  background-color: rgba(255, 251, 245, 0.9);
+  margin: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(9, 7, 4, 0.421);
 
   .post-creator {
     background-color: white;
@@ -169,15 +170,16 @@
       min-height: 100px;
       padding: 1rem;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: 6px;
       resize: vertical;
       margin-bottom: 1rem;
       font-size: 1rem;
+      font-family: 'Zain', sans-serif;
       transition: border-color 0.3s;
 
       &:focus {
         outline: none;
-        border-color: #4285f4;
+        border-color: #f2ac29;
       }
     }
 
@@ -190,15 +192,17 @@
     .image-upload-btn,
     .post-btn {
       padding: 0.6rem 1.2rem;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       font-size: 0.9rem;
       transition: all 0.3s;
+      font-family: 'Zain', sans-serif;
     }
 
     .image-upload-btn {
       background-color: #f1f1f1;
       border: 1px solid #ddd;
+      font-weight: 600;
 
       &:hover {
         background-color: #e5e5e5;
@@ -206,10 +210,10 @@
     }
 
     .post-btn {
-      background-color: #4285f4;
+      background-color: #f2ac29;
       color: white;
       border: none;
-      font-weight: 500;
+      font-weight: 600;
 
       &:disabled {
         background-color: #ccc;
@@ -217,7 +221,7 @@
       }
 
       &:not(:disabled):hover {
-        background-color: #3367d6;
+        background-color: #c7922e;
       }
     }
 
@@ -228,7 +232,7 @@
       .preview-image {
         max-width: 100%;
         max-height: 300px;
-        border-radius: 4px;
+        border-radius: 6px;
         display: block;
       }
 
@@ -274,7 +278,7 @@
           border-radius: 50%;
           margin-right: 1rem;
           object-fit: cover;
-          border: 2px solid #f1f1f1;
+          border: 2px solid #f2ac29;
         }
 
         .post-author-info {
@@ -290,9 +294,10 @@
               color: #333;
               margin-right: 0.5rem;
               cursor: pointer;
+              font-family: 'Zain', sans-serif;
 
               &:hover {
-                color: #4285f4;
+                color: #f2ac29;
               }
             }
 
@@ -302,6 +307,7 @@
               border-radius: 10px;
               background-color: #f1f1f1;
               color: #666;
+              font-family: 'Zain', sans-serif;
 
               &.player {
                 background-color: #e3f2fd;
@@ -320,9 +326,10 @@
             gap: 1rem;
             font-size: 0.8rem;
             color: #666;
+            font-family: 'Zain', sans-serif;
 
             .post-sport {
-              font-weight: 500;
+              font-weight: 600;
             }
           }
         }
@@ -333,12 +340,13 @@
           margin-bottom: 1rem;
           line-height: 1.5;
           color: #333;
+          font-family: 'Zain', sans-serif;
         }
 
         .post-image {
           max-width: 100%;
           max-height: 400px;
-          border-radius: 4px;
+          border-radius: 6px;
           display: block;
           margin: 0 auto;
         }
@@ -356,10 +364,15 @@
       width: 40px;
       height: 40px;
       border: 4px solid #f3f3f3;
-      border-top: 4px solid #4285f4;
+      border-top: 4px solid #f2ac29;
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 1rem;
+    }
+
+    p {
+      font-family: 'Zain', sans-serif;
+      color: #333;
     }
   }
 
@@ -371,17 +384,18 @@
     border-radius: 8px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     color: #666;
+    font-family: 'Zain', sans-serif;
   }
 }
 
-// =================== FOOTER ===================
-
 .footer {
-  background-color: #333;
-  color: white;
+  background-color: #fffbf5;
+  color: #333;
   padding: 1.5rem;
   text-align: center;
   font-size: 0.9rem;
+  font-family: 'Zain', sans-serif;
+  box-shadow: 0 -4px 20px rgba(9, 7, 4, 0.1);
 
   .footer-links {
     margin-top: 1rem;
@@ -390,8 +404,9 @@
     gap: 1.5rem;
 
     a {
-      color: white;
+      color: #333;
       text-decoration: none;
+      font-weight: 600;
 
       &:hover {
         color: #f2ac29;
@@ -401,12 +416,14 @@
   }
 }
 
-// =================== ANIMACIONES ===================
-
 @keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -419,7 +436,6 @@
   }
 }
 
-// =================== PROFILE MODAL ===================
 .profile-overlay {
   position: fixed;
   top: 0;
@@ -435,14 +451,14 @@
   animation: fadeIn 0.3s ease-out;
 
   .profile-modal {
-    background-color: white;
+    background-color: #fffbf5;
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
     max-height: 90vh;
     overflow-y: auto;
     position: relative;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 10px 25px rgba(9, 7, 4, 0.421);
     padding: 2rem;
     animation: modalSlideUp 0.3s ease-out;
 
@@ -463,8 +479,8 @@
       border-radius: 50%;
 
       &:hover {
-        background-color: #f5f5f5;
-        color: #333;
+        background-color: rgba(242, 172, 41, 0.1);
+        color: #f2ac29;
       }
     }
 
@@ -478,22 +494,28 @@
         width: 40px;
         height: 40px;
         border: 4px solid #f3f3f3;
-        border-top: 4px solid #4285f4;
+        border-top: 4px solid #f2ac29;
         border-radius: 50%;
         animation: spin 1s linear infinite;
         margin-bottom: 1rem;
+      }
+
+      p {
+        font-family: 'Zain', sans-serif;
+        color: #333;
       }
     }
 
     .profile-details {
       text-align: center;
+      font-family: 'Zain', sans-serif;
 
       .profile-img-large {
         width: 120px;
         height: 120px;
         border-radius: 50%;
         object-fit: cover;
-        border: 4px solid #f5f5f5;
+        border: 4px solid #f2ac29;
         margin-bottom: 1.5rem;
       }
 
@@ -501,6 +523,7 @@
         font-size: 1.5rem;
         margin-bottom: 0.5rem;
         color: #333;
+        font-weight: 700;
       }
 
       .profile-role {
@@ -513,6 +536,7 @@
         font-size: 1.1rem;
         margin-bottom: 1.5rem;
         color: #333;
+        font-weight: 600;
       }
 
       p {
@@ -523,7 +547,25 @@
 
         strong {
           color: #333;
-          font-weight: 500;
+          font-weight: 600;
+        }
+      }
+
+      .send-message-btn {
+        padding: 0.75rem 1.5rem;
+        background-color: #f2ac29;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-top: 1.5rem;
+        font-family: 'Zain', sans-serif;
+
+        &:hover {
+          background-color: #c7922e;
         }
       }
     }
@@ -535,6 +577,8 @@
       background-color: #fef0f0;
       border-radius: 4px;
       margin: 1rem 0;
+      font-family: 'Zain', sans-serif;
+      font-weight: 600;
     }
   }
 }
@@ -549,8 +593,6 @@
     opacity: 1;
   }
 }
-
-// =================== RESPONSIVE ===================
 
 @media (max-width: 768px) {
   .header {
@@ -576,5 +618,6 @@
 
   .content {
     padding: 1rem;
+    margin: 0.5rem;
   }
 }

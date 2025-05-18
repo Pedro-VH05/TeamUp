@@ -10,13 +10,24 @@
       <button class="messages-btn" (click)="navigateToFeed()">Feed</button>
     </div>
 
-    <div class="user-profile" *ngIf="currentUser">
+    <div class="user-profile" *ngIf="currentUser" (click)="toggleProfileMenu($event)">
       <img [src]="getProfileImage(currentUser)"
            alt="User Profile"
            class="profile-pic">
       <span class="username">
         {{ getDisplayName(currentUser) }}
       </span>
+
+      <div class="profile-menu" *ngIf="showProfileMenu" (click)="$event.stopPropagation()">
+        <div class="menu-item" (click)="viewProfile(currentUser.uid); $event.stopPropagation()">
+          <span class="menu-icon"><i class="fas fa-user"></i></span>
+          <span>Ver mi perfil</span>
+        </div>
+        <div class="menu-item" (click)="logout(); $event.stopPropagation()">
+          <span class="menu-icon"><i class="fas fa-sign-out-alt"></i></span>
+          <span>Cerrar sesión</span>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -97,12 +108,43 @@
     </div>
   </main>
 
-  <footer class="footer">
-    <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
-    <div class="footer-links">
-      <a href="#">Términos y condiciones</a>
-      <a href="#">Política de privacidad</a>
-      <a href="#">Contacto</a>
+  <!-- Modal de perfil -->
+  <div class="profile-overlay" *ngIf="showProfileModal" (click)="closeProfileModal()">
+    <div class="profile-modal" (click)="$event.stopPropagation()">
+      <button class="close-btn" (click)="closeProfileModal()">×</button>
+
+      <div *ngIf="isLoadingProfile" class="loading-profile">
+        <div class="spinner"></div>
+        <p>Cargando perfil...</p>
+      </div>
+
+      <div *ngIf="!isLoadingProfile && selectedProfile" class="profile-details">
+        <img [src]="getProfileImage(selectedProfile)" alt="Foto perfil" class="profile-img-large">
+        <h2 class="profile-name">{{ getDisplayName(selectedProfile) }}</h2>
+
+        <p class="profile-role">{{ selectedProfile.type === 'team' ? 'Club deportivo' : 'Jugador' }}</p>
+        <p class="profile-sport"><strong>Deporte:</strong> {{ selectedProfile.sport || 'No especificado' }}</p>
+
+        <ng-container *ngIf="selectedProfile.type === 'player'">
+          <p><strong>Posición:</strong> {{ selectedProfile.position }}</p>
+          <p><strong>Experiencia:</strong> {{ selectedProfile.experience }} año(s)</p>
+          <p><strong>Edad:</strong> {{ selectedProfile.birthDate | date:'longDate' }}</p>
+        </ng-container>
+
+        <ng-container *ngIf="selectedProfile.type === 'team'">
+          <p><strong>Localización:</strong> {{ selectedProfile.location }}</p>
+        </ng-container>
+
+        <button class="send-message-btn"
+                (click)="navigateToMessages(selectedProfile.uid)"
+                *ngIf="currentUser?.uid !== selectedProfile.uid">
+          Enviar mensaje
+        </button>
+      </div>
+
+      <div *ngIf="profileError" class="error-message">
+        {{ profileError }}
+      </div>
     </div>
-  </footer>
+  </div>
 </div>

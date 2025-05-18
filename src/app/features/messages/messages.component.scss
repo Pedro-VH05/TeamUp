@@ -1,10 +1,22 @@
+.landing-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #f2ac29;
+  background-image: url('/fondo.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  font-family: 'Zain', sans-serif;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 20px;
-  background-color: #fff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1rem 2rem;
+  background-color: #fffbf5;
+  box-shadow: 0 4px 20px rgba(9, 7, 4, 0.421);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -12,71 +24,150 @@
   .logo-section {
     display: flex;
     align-items: center;
-    gap: 10px;
 
     .logo {
       height: 40px;
-      width: auto;
+      margin-right: 10px;
     }
 
     .app-name {
       font-size: 1.5rem;
       font-weight: bold;
-      color: #2196F3;
+      color: #f2ac29;
     }
   }
 
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 1rem;
 
     .search-bar {
-      padding: 8px 15px;
+      padding: 0.5rem 1rem;
       border: 1px solid #ddd;
       border-radius: 20px;
-      width: 200px;
+      min-width: 250px;
+      font-size: 0.9rem;
+      transition: border-color 0.3s;
+      font-family: 'Zain', sans-serif;
+
+      &:focus {
+        outline: none;
+        border-color: #f2ac29;
+      }
     }
 
     .messages-btn {
-      padding: 8px 15px;
-      background-color: #2196F3;
+      padding: 0.5rem 1.5rem;
+      background-color: #f2ac29;
       color: white;
       border: none;
       border-radius: 20px;
       cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+      font-family: 'Zain', sans-serif;
+
+      &:hover {
+        background-color: #c7922e;
+      }
     }
   }
 
   .user-profile {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 0.5rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+
+    &:hover {
+      background-color: rgba(242, 172, 41, 0.1);
+    }
 
     .profile-pic {
       width: 40px;
       height: 40px;
       border-radius: 50%;
       object-fit: cover;
+      border: 2px solid #f2ac29;
     }
 
     .username {
-      font-weight: 500;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .profile-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background-color: #fffbf5;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(9, 7, 4, 0.421);
+      min-width: 220px;
+      z-index: 1000;
+      margin-top: 10px;
+      overflow: hidden;
+      animation: fadeIn 0.2s ease-out forwards;
+
+      .menu-item {
+        padding: 0.75rem 1.25rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        transition: all 0.3s;
+        color: #333;
+        font-size: 0.95rem;
+        font-family: 'Zain', sans-serif;
+
+        &:hover {
+          background-color: rgba(242, 172, 41, 0.1);
+          color: #f2ac29;
+        }
+
+        .menu-icon {
+          width: 20px;
+          text-align: center;
+          color: #f2ac29;
+        }
+
+        &:last-child {
+          color: #e74c3c;
+
+          &:hover {
+            background-color: #fef0f0;
+          }
+
+          .menu-icon {
+            color: #e74c3c;
+          }
+        }
+      }
     }
   }
 }
 
+.messages-content {
+  flex: 1;
+  background-color: rgba(255, 251, 245, 0.9);
+}
+
 .messages-container {
   display: flex;
-  height: calc(100vh - 60px);
-  font-family: 'Arial', sans-serif;
+  height: 87vh;
+  font-family: 'Zain', sans-serif;
 }
 
 .conversations-list {
   width: 300px;
   border-right: 1px solid #e0e0e0;
   overflow-y: auto;
-  background-color: #f5f5f5;
+  background-color: #fffbf5;
+  border-radius: 8px 0 0 8px;
 
   h2 {
     padding: 15px;
@@ -85,6 +176,7 @@
     color: #333;
     background-color: #fff;
     border-bottom: 1px solid #e0e0e0;
+    font-weight: 600;
   }
 }
 
@@ -95,14 +187,14 @@
   align-items: center;
   border-bottom: 1px solid #e0e0e0;
   background-color: #fff;
-  transition: background-color 0.2s;
+  transition: all 0.3s;
 
   &:hover {
-    background-color: #f0f0f0;
+    background-color: rgba(242, 172, 41, 0.1);
   }
 
   &.selected {
-    background-color: #e3f2fd;
+    background-color: rgba(242, 172, 41, 0.2);
   }
 }
 
@@ -112,6 +204,7 @@
   border-radius: 50%;
   margin-right: 12px;
   object-fit: cover;
+  border: 2px solid #f2ac29;
 }
 
 .conversation-info {
@@ -120,7 +213,7 @@
 }
 
 .conversation-name {
-  font-weight: 500;
+  font-weight: 600;
   display: block;
   color: #333;
   margin-bottom: 3px;
@@ -153,7 +246,7 @@
 }
 
 .unread-count {
-  background-color: #2196F3;
+  background-color: #f2ac29;
   color: white;
   border-radius: 50%;
   width: 20px;
@@ -162,19 +255,23 @@
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
+  font-weight: 600;
 }
 
-.no-conversations, .loading {
+.no-conversations,
+.loading {
   padding: 15px;
   color: #666;
   text-align: center;
+  font-family: 'Zain', sans-serif;
 }
 
 .messages-view {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #f9f9f9;
+  background-color: #fffbf5;
+  border-radius: 0 8px 8px 0;
 }
 
 .messages-scroll {
@@ -208,6 +305,7 @@
   border-radius: 50%;
   margin-right: 10px;
   align-self: flex-end;
+  border: 2px solid #f2ac29;
 }
 
 .message-content {
@@ -221,6 +319,7 @@
   p {
     margin: 0;
     word-break: break-word;
+    font-family: 'Zain', sans-serif;
   }
 }
 
@@ -230,6 +329,7 @@
   display: block;
   text-align: right;
   margin-top: 5px;
+  font-family: 'Zain', sans-serif;
 }
 
 .message-input {
@@ -246,24 +346,27 @@
     margin-right: 10px;
     outline: none;
     font-size: 1rem;
+    font-family: 'Zain', sans-serif;
 
     &:focus {
-      border-color: #2196F3;
+      border-color: #f2ac29;
     }
   }
 
   button {
     padding: 10px 20px;
-    background-color: #2196F3;
+    background-color: #f2ac29;
     color: white;
     border: none;
     border-radius: 20px;
     cursor: pointer;
     font-size: 1rem;
-    transition: background-color 0.2s;
+    font-weight: 600;
+    transition: background-color 0.3s;
+    font-family: 'Zain', sans-serif;
 
     &:hover {
-      background-color: #0d8bf2;
+      background-color: #c7922e;
     }
 
     &:disabled {
@@ -278,10 +381,216 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #f9f9f9;
+  background-color: #fffbf5;
+  border-radius: 0 8px 8px 0;
 
   p {
     color: #666;
     font-size: 1.1rem;
+    font-family: 'Zain', sans-serif;
+  }
+}
+
+.profile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+
+  .profile-modal {
+    background-color: #fffbf5;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(9, 7, 4, 0.421);
+    padding: 2rem;
+    animation: modalSlideUp 0.3s ease-out;
+
+    .close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #666;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+
+      &:hover {
+        background-color: rgba(242, 172, 41, 0.1);
+        color: #f2ac29;
+      }
+    }
+
+    .loading-profile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #f2ac29;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        font-family: 'Zain', sans-serif;
+        color: #333;
+      }
+    }
+
+    .profile-details {
+      text-align: center;
+      font-family: 'Zain', sans-serif;
+
+      .profile-img-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid #f2ac29;
+        margin-bottom: 1.5rem;
+      }
+
+      .profile-name {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+        color: #333;
+        font-weight: 700;
+      }
+
+      .profile-role {
+        color: #666;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+      }
+
+      .profile-sport {
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        color: #333;
+        font-weight: 600;
+      }
+
+      p {
+        margin-bottom: 0.8rem;
+        color: #555;
+        text-align: left;
+        padding: 0 1rem;
+
+        strong {
+          color: #333;
+          font-weight: 600;
+        }
+      }
+
+      .send-message-btn {
+        padding: 0.75rem 1.5rem;
+        background-color: #f2ac29;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        margin-top: 1.5rem;
+        font-family: 'Zain', sans-serif;
+
+        &:hover {
+          background-color: #c7922e;
+        }
+      }
+    }
+
+    .error-message {
+      color: #e74c3c;
+      text-align: center;
+      padding: 1rem;
+      background-color: #fef0f0;
+      border-radius: 4px;
+      margin: 1rem 0;
+      font-family: 'Zain', sans-serif;
+      font-weight: 600;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalSlideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.footer {
+  background-color: #fffbf5;
+  color: #333;
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 0.9rem;
+  font-family: 'Zain', sans-serif;
+  box-shadow: 0 -4px 20px rgba(9, 7, 4, 0.1);
+
+  .footer-links {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+
+    a {
+      color: #333;
+      text-decoration: none;
+      font-weight: 600;
+
+      &:hover {
+        color: #f2ac29;
+        text-decoration: underline;
+      }
+    }
   }
 }

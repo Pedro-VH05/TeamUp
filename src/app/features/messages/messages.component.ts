@@ -39,6 +39,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private routeSub!: Subscription;
+  private clickListener!: () => void;
 
   currentUser: any;
   conversations$: Observable<Conversation[]> | undefined;
@@ -47,6 +48,13 @@ export class MessagesComponent implements OnInit, OnDestroy {
   newMessage = '';
   recipientId: string | null = null;
   isLoading = false;
+
+  // Propiedades para el perfil
+  showProfileMenu = false;
+  showProfileModal = false;
+  selectedProfile: any = null;
+  isLoadingProfile = false;
+  profileError: string | null = null;
 
   ngOnInit(): void {
     this.routeSub = this.route.queryParams.subscribe(params => {
@@ -67,10 +75,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
         this.findOrCreateConversation(user.uid, this.recipientId);
       }
     });
+
+    this.clickListener = () => this.showProfileMenu = false;
+    document.addEventListener('click', this.clickListener);
   }
 
   ngOnDestroy(): void {
     this.routeSub?.unsubscribe();
+    document.removeEventListener('click', this.clickListener);
   }
 
   async findOrCreateConversation(currentUserId: string, recipientId: string): Promise<void> {
@@ -174,8 +186,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
   async sendMessage(): Promise<void> {
     if (!this.newMessage.trim() || !this.selectedConversation || !this.currentUser) return;
 
+    const messageText = this.newMessage;
+    this.newMessage = '';
+
     const messageData = {
-      text: this.newMessage,
+      text: messageText,
       senderId: this.currentUser.uid,
       senderName: this.getDisplayName(this.currentUser),
       senderPhoto: this.getProfileImage(this.currentUser),
@@ -189,14 +204,60 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
       const conversationRef = doc(this.firestore, 'conversations', this.selectedConversation);
       await setDoc(conversationRef, {
-        lastMessage: this.newMessage,
+        lastMessage: messageText,
         lastMessageTime: serverTimestamp()
       }, { merge: true });
 
-      this.newMessage = '';
     } catch (error) {
       console.error('Error sending message:', error);
+      this.newMessage = messageText;
     }
+  }
+
+  // Métodos para el perfil
+  toggleProfileMenu(event: Event): void {
+    event.stopPropagation();
+    this.showProfileMenu = !this.showProfileMenu;
+  }
+
+  async viewProfile(userId: string): Promise<void> {
+    this.showProfileMenu = false;
+    this.isLoadingProfile = true;
+    this.profileError = null;
+    this.showProfileModal = true;
+
+    try {
+      const docRef = doc(this.firestore, 'users', userId);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        this.selectedProfile = {
+          ...docSnap.data(),
+          id: docSnap.id,
+          uid: docSnap.id
+        };
+      } else {
+        this.profileError = 'Perfil no encontrado';
+      }
+    } catch (error) {
+      console.error('Error al cargar perfil:', error);
+      this.profileError = 'Error al cargar el perfil';
+    } finally {
+      this.isLoadingProfile = false;
+    }
+  }
+
+  closeProfileModal(): void {
+    this.showProfileModal = false;
+    this.selectedProfile = null;
+    this.profileError = null;
+  }
+
+  navigateToMessages(recipientId: string): void {
+    this.closeProfileModal();
+    this.router.navigate(['/messages'], {
+      queryParams: { recipient: recipientId }
+    });
   }
 
   getDisplayName(user: any): string {
@@ -210,5 +271,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   navigateToFeed(): void {
     this.router.navigate(['/feed']);
+  }
+
+  async logout(): Promise<void> {
+    try {
+      await this.authService.logout();
+      this.router.navigate(['/login']);
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
   }
 }
