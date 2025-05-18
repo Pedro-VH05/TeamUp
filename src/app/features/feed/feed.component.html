@@ -99,6 +99,40 @@
     </div>
   </main>
 
+  <div class="profile-overlay" *ngIf="showProfileModal" (click)="closeProfileModal()">
+  <div class="profile-modal" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeProfileModal()">×</button>
+
+    <div *ngIf="isLoadingProfile" class="loading-profile">
+      <div class="spinner"></div>
+      <p>Cargando perfil...</p>
+    </div>
+
+    <div *ngIf="!isLoadingProfile && selectedProfile" class="profile-details">
+      <img [src]="getProfileImage(selectedProfile)" alt="Foto perfil" class="profile-img-large">
+      <h2 class="profile-name">{{ getDisplayName(selectedProfile) }}</h2>
+
+      <p class="profile-role">{{ selectedProfile.type === 'team' ? 'Club deportivo' : 'Jugador' }}</p>
+      <p class="profile-sport"><strong>Deporte:</strong> {{ selectedProfile.sport || 'No especificado' }}</p>
+
+      <ng-container *ngIf="selectedProfile.type === 'player'">
+        <p><strong>Posición:</strong> {{ selectedProfile.position }}</p>
+        <p><strong>Experiencia:</strong> {{ selectedProfile.experience }} año(s)</p>
+        <p><strong>Edad:</strong> {{ selectedProfile.birthDate | date:'longDate' }}</p>
+      </ng-container>
+
+      <ng-container *ngIf="selectedProfile.type === 'team'">
+        <p><strong>Localización:</strong> {{ selectedProfile.location }}</p>
+      </ng-container>
+    </div>
+
+    <div *ngIf="profileError" class="error-message">
+      {{ profileError }}
+    </div>
+  </div>
+</div>
+
+
   <footer class="footer">
     <p>&copy; 2025 TeamUp. Todos los derechos reservados.</p>
     <div class="footer-links">

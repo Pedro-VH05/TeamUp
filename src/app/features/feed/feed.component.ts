@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, inject, HostListener, ElementRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, Injector, runInInjectionContext } from '@angular/core';
 import { BehaviorSubject, Subscription, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, addDoc, collectionData, query, where, orderBy } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, query, where, orderBy, doc, getDoc } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 import { Router } from '@angular/router';
@@ -19,8 +19,8 @@ export class FeedComponent implements OnInit, OnDestroy {
   private storage = inject(Storage);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private injector = inject(Injector);
   private userSub: Subscription = new Subscription;
-  private elementRef!: ElementRef;
 
   posts$ = new BehaviorSubject<any[]>([]);
   currentUser: any = null;
@@ -32,6 +32,10 @@ export class FeedComponent implements OnInit, OnDestroy {
   errorMessage: string | null = null;
   showProfileMenu = false;
 
+  showProfileModal = false;
+  selectedProfile: any = null;
+  isLoadingProfile = false;
+  profileError: string | null = null;
 
   async ngOnInit(): Promise<void> {
     this.userSub = this.authService.currentUser$.subscribe({
@@ -40,9 +44,7 @@ export class FeedComponent implements OnInit, OnDestroy {
           this.router.navigate(['/login']);
           return;
         }
-
         this.currentUser = user;
-        console.log('Usuario autenticado:', user);
         await this.loadPosts();
       },
       error: (err) => {
@@ -73,28 +75,61 @@ export class FeedComponent implements OnInit, OnDestroy {
         return;
       }
 
-      const postsRef = collection(this.firestore, 'posts');
-      const q = query(
-        postsRef,
-        where('sport', '==', sport),
-        orderBy('createdAt', 'desc')
-      );
-
-      const posts = await firstValueFrom(collectionData(q, { idField: 'id' }));
-      this.posts$.next(posts as any[]);
+      await runInInjectionContext(this.injector, async () => {
+        const postsRef = collection(this.firestore, 'posts');
+        const q = query(
+          postsRef,
+          where('sport', '==', sport),
+          orderBy('createdAt', 'desc')
+        );
+        const posts = await firstValueFrom(collectionData(q, { idField: 'id' }));
+        this.posts$.next(posts as any[]);
+      });
     } catch (error: any) {
       console.error('Error al cargar posts:', error);
       this.errorMessage = 'Error al cargar publicaciones';
-
-      if (error.code === 'failed-precondition') {
-        this.errorMessage = 'Configuración incompleta. Por favor intenta más tarde.';
-        console.error('Necesitas crear un índice en Firestore:', error.message);
-      }
-
       this.posts$.next([]);
     } finally {
       this.isLoadingPosts = false;
     }
+  }
+
+  async viewProfile(authorId: string): Promise<void> {
+    if (this.currentUser?.uid === authorId) {
+      authorId = this.currentUser.uid;
+    }
+
+    this.isLoadingProfile = true;
+    this.profileError = null;
+    this.showProfileModal = true;
+
+    try {
+      await runInInjectionContext(this.injector, async () => {
+        const docRef = doc(this.firestore, 'users', authorId);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+          this.selectedProfile = {
+            ...docSnap.data(),
+            id: docSnap.id,
+            uid: docSnap.id
+          };
+        } else {
+          this.profileError = 'Perfil no encontrado';
+        }
+      });
+    } catch (error) {
+      console.error('Error al cargar perfil:', error);
+      this.profileError = 'Error al cargar el perfil';
+    } finally {
+      this.isLoadingProfile = false;
+    }
+  }
+
+  closeProfileModal(): void {
+    this.showProfileModal = false;
+    this.selectedProfile = null;
+    this.profileError = null;
   }
 
   onFileSelected(event: any): void {
@@ -124,10 +159,6 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   navigateToMessages(): void {
     this.router.navigate(['/messages']);
-  }
-
-  viewProfile(authorId: string): void {
-    this.router.navigate(['/profile', authorId]);
   }
 
   toggleProfileMenu(event: Event): void {
