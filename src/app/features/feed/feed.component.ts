@@ -157,7 +157,14 @@ export class FeedComponent implements OnInit, OnDestroy {
                                 (user.profilePictureUrl || 'assets/user-profile.jpg');
   }
 
-  navigateToMessages(): void {
+  navigateToMessages(recipientId: string): void {
+    this.closeProfileModal();
+    this.router.navigate(['/messages'], {
+      queryParams: { recipient: recipientId }
+  });
+  }
+
+  navigateToMessagesPage(): void {
     this.router.navigate(['/messages']);
   }
 

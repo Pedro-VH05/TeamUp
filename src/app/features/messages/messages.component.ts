@@ -205,7 +205,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
 
   getProfileImage(user: any): string {
     return user.type === 'team' ? (user.teamLogoUrl || 'assets/team-default.png') :
-                                (user.profilePictureUrl || 'assets/user-profile.jpg');
+      (user.profilePictureUrl || 'assets/user-profile.jpg');
   }
 
   navigateToFeed(): void {
