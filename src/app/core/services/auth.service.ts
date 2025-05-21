@@ -18,7 +18,6 @@ export class AuthService {
     this.initializeAuth();
   }
 
-  // En AuthService
   private initializeAuth(): void {
     onAuthStateChanged(this.auth, async (firebaseUser: User | null) => {
       if (firebaseUser) {
@@ -29,7 +28,6 @@ export class AuthService {
           } else {
             console.warn('Usuario autenticado pero sin datos en Firestore');
             this.currentUserSubject.next(null);
-            // Elimina la redirección automática aquí
           }
         } catch (error) {
           console.error('Error al cargar datos del usuario:', error);
@@ -74,27 +72,31 @@ export class AuthService {
     return userCredential.user;
   }
 
-  async registerTeam(basicData: any, additionalData: any, password: string) {
-    const userCredential = await createUserWithEmailAndPassword(
-      this.auth,
-      basicData.email,
-      password
-    );
+  async registerTeam(email: string, password: string) {
+    const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
+    return userCredential.user;
+  }
 
-    const fullTeamData = {
-      ...basicData,
-      ...additionalData,
+  async saveTeamData(teamData: any) {
+    const currentUser = this.auth.currentUser;
+    if (!currentUser) {
+      throw new Error('No hay usuario autenticado para guardar los datos del equipo.');
+    }
+
+    const formattedData = {
+      ...teamData,
       type: 'team',
       registrationDate: new Date().toISOString(),
-      categories: additionalData.categories.reduce((acc: any, category: any, index: number) => {
+      categories: teamData.categories?.reduce((acc: any, category: any, index: number) => {
         acc[`category_${index}`] = category;
         return acc;
       }, {})
     };
 
-    await this.userService.createUser(userCredential.user.uid, fullTeamData);
-    return userCredential.user;
+    await this.userService.createUser(currentUser.uid, formattedData);
   }
+
+
 
   async login(email: string, password: string) {
     try {

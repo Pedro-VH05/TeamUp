@@ -153,8 +153,8 @@ export class FeedComponent implements OnInit, OnDestroy {
   }
 
   getProfileImage(user: any): string {
-    return user.type === 'team' ? (user.teamLogoUrl || 'assets/team-default.png') :
-                                (user.profilePictureUrl || 'assets/user-profile.jpg');
+    return user.type === 'team' ? (user.teamLogoUrl || '/user-profile.jpg') :
+                                (user.profilePictureUrl || '/user-profile.jpg');
   }
 
   navigateToMessages(recipientId: string): void {

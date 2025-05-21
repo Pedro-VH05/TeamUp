@@ -118,7 +118,7 @@
         <ng-container *ngIf="selectedProfile.type === 'player'">
           <p><strong>Posición:</strong> {{ selectedProfile.position }}</p>
           <p><strong>Experiencia:</strong> {{ selectedProfile.experience }} año(s)</p>
-          <p><strong>Edad:</strong> {{ selectedProfile.birthDate | date:'longDate' }}</p>
+          <p><strong>Fecha de nacimiento:</strong> {{ selectedProfile.birthDate | date:'longDate' }}</p>
         </ng-container>
 
         <ng-container *ngIf="selectedProfile.type === 'team'">

@@ -3,7 +3,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { AngularFireStorage } from '@angular/fire/compat/storage';
+import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 import { finalize } from 'rxjs/operators';
 
 @Component({
@@ -56,7 +56,7 @@ export class RegisterTeamComponent {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private storage: AngularFireStorage
+    private storage: Storage
   ) {
     // Paso 1: Datos básicos del club
     this.basicForm = this.fb.group({
@@ -127,57 +127,32 @@ export class RegisterTeamComponent {
     const basicData = this.basicForm.value;
     const sportsData = this.sportsForm.value;
 
-    // Si hay un archivo seleccionado, subirlo primero
-    if (this.selectedFile) {
-      try {
-        const filePath = `team-logos/${new Date().getTime()}_${this.selectedFile.name}`;
-        const fileRef = this.storage.ref(filePath);
-        const task = this.storage.upload(filePath, this.selectedFile);
-
-        // Opcional: Mostrar progreso de subida
-        task.percentageChanges().subscribe(percent => {
-          this.uploadPercent = percent;
-        });
-
-        // Esperar a que termine la subida
-        await task.snapshotChanges().pipe(
-          finalize(() => {
-            fileRef.getDownloadURL().subscribe(url => {
-              // Una vez que tenemos la URL, proceder con el registro
-              this.completeRegistration(basicData, sportsData, url);
-            });
-          })
-        ).toPromise();
-
-      } catch (error) {
-        console.error('Error al subir el archivo:', error);
-        return;
-      }
-    } else {
-      // Si no hay archivo, proceder sin logo
-      this.completeRegistration(basicData, sportsData, null);
-    }
-  }
-
-  private async completeRegistration(basicData: any, sportsData: any, logoUrl: string | null) {
-    delete sportsData.teamLogo;
-
-    const teamData = {
-      ...basicData,
-      ...sportsData,
-      teamLogo: logoUrl,
-      registrationDate: new Date().toISOString()
-    };
-
     try {
-      await this.authService.registerTeam(
-        basicData,
-        { ...sportsData, teamLogo: logoUrl },
-        basicData.password
-      );
+      // 1. Registrar al usuario (y autenticarlo)
+      await this.authService.registerTeam(basicData.email, basicData.password);
+
+      // 2. Subir logo si hay
+      let downloadURL: string | null = null;
+      if (this.selectedFile) {
+        const filePath = `profile_pictures/${new Date().getTime()}_${this.selectedFile.name}`;
+        const fileRef = ref(this.storage, filePath);
+        await uploadBytes(fileRef, this.selectedFile);
+        downloadURL = await getDownloadURL(fileRef);
+      }
+
+      // 3. Guardar los datos del equipo (Firestore)
+      const teamData = {
+        ...basicData,
+        ...sportsData,
+        teamLogo: downloadURL,
+        registrationDate: new Date().toISOString()
+      };
+      await this.authService.saveTeamData(teamData);
+
       this.router.navigate(['/feed']);
     } catch (error) {
-      console.error('Error en el registro del equipo:', error);
+      console.error('Error durante el registro del equipo:', error);
     }
   }
+
 }

@@ -14,6 +14,7 @@ interface Message {
   senderPhoto: string;
   timestamp: any;
   sport: string;
+  dateHeader?: string;
 }
 
 interface Conversation {
@@ -49,7 +50,6 @@ export class MessagesComponent implements OnInit, OnDestroy {
   recipientId: string | null = null;
   isLoading = false;
 
-  // Propiedades para el perfil
   showProfileMenu = false;
   showProfileModal = false;
   selectedProfile: any = null;
@@ -180,7 +180,29 @@ export class MessagesComponent implements OnInit, OnDestroy {
     this.messages$ = collectionData(
       query(messagesRef, orderBy('timestamp', 'asc')),
       { idField: 'id' }
+    ).pipe(
+      map((messages: any[]) => {
+        let lastDate = '';
+        return messages.map(msg => {
+          const messageDate = msg.timestamp?.toDate();
+          const currentDate = messageDate ? this.formatMessageDate(messageDate) : '';
+
+          if (currentDate && currentDate !== lastDate) {
+            lastDate = currentDate;
+            return {
+              ...msg,
+              dateHeader: currentDate
+            };
+          }
+          return msg;
+        });
+      })
     ) as Observable<Message[]>;
+  }
+
+  private formatMessageDate(date: Date): string {
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
+    return date.toLocaleDateString('es-ES', options);
   }
 
   async sendMessage(): Promise<void> {
@@ -189,16 +211,16 @@ export class MessagesComponent implements OnInit, OnDestroy {
     const messageText = this.newMessage;
     this.newMessage = '';
 
-    const messageData = {
-      text: messageText,
-      senderId: this.currentUser.uid,
-      senderName: this.getDisplayName(this.currentUser),
-      senderPhoto: this.getProfileImage(this.currentUser),
-      timestamp: serverTimestamp(),
-      sport: this.currentUser.sport
-    };
-
     try {
+      const messageData = {
+        text: messageText,
+        senderId: this.currentUser.uid,
+        senderName: this.getDisplayName(this.currentUser),
+        senderPhoto: this.getProfileImage(this.currentUser),
+        timestamp: serverTimestamp(),
+        sport: this.currentUser.sport
+      };
+
       const messagesRef = collection(this.firestore, 'conversations', this.selectedConversation, 'messages');
       await addDoc(messagesRef, messageData);
 
@@ -208,13 +230,13 @@ export class MessagesComponent implements OnInit, OnDestroy {
         lastMessageTime: serverTimestamp()
       }, { merge: true });
 
+      this.newMessage = "";
+
     } catch (error) {
       console.error('Error sending message:', error);
-      this.newMessage = messageText;
     }
   }
 
-  // Métodos para el perfil
   toggleProfileMenu(event: Event): void {
     event.stopPropagation();
     this.showProfileMenu = !this.showProfileMenu;

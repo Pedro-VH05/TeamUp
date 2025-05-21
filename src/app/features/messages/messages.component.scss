@@ -282,6 +282,32 @@
   background-repeat: repeat;
 }
 
+.date-header {
+  text-align: center;
+  margin: 1rem 0;
+  color: #666;
+  font-size: 0.9rem;
+  position: relative;
+
+  &:before, &:after {
+    content: "";
+    display: inline-block;
+    width: 30%;
+    height: 1px;
+    background-color: #ddd;
+    position: absolute;
+    top: 50%;
+  }
+
+  &:before {
+    left: 0;
+  }
+
+  &:after {
+    right: 0;
+  }
+}
+
 .message {
   display: flex;
   margin-bottom: 15px;
