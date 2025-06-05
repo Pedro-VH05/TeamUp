@@ -1,13 +1,15 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from '@angular/fire/auth';
+import { Auth, createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, User } from '@angular/fire/auth';
 import { Router } from '@angular/router';
 import { UserService } from './user.service';
 import { BehaviorSubject, distinctUntilChanged, Observable, take } from 'rxjs';
+import { signInWithRedirect } from 'firebase/auth';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  [x: string]: any;
   private auth = inject(Auth);
   private router = inject(Router);
   private userService = inject(UserService);
@@ -61,14 +63,14 @@ export class AuthService {
       password
     );
 
-    const fullPlayerData = {
+    const userDoc = {
       ...basicData,
       ...additionalData,
       type: 'player',
       registrationDate: new Date().toISOString()
     };
 
-    await this.userService.createUser(userCredential.user.uid, fullPlayerData);
+    await this.userService.createUser(userCredential.user.uid, userDoc);
     return userCredential.user;
   }
 
@@ -112,6 +114,44 @@ export class AuthService {
       return userCredential.user;
     } catch (error) {
       console.error('Error en login:', error);
+      throw error;
+    }
+  }
+
+  async loginWithGoogle() {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(this.auth, provider);
+
+      // Verificar si el usuario es nuevo
+      const userDoc = await this.userService.getUserData(result.user.uid);
+
+      if (!userDoc) {
+        // Guardar datos básicos de Google en Firestore
+        const basicUserData = {
+          uid: result.user.uid,
+          email: result.user.email || '',
+          displayName: result.user.displayName || '',
+          photoURL: result.user.photoURL || '',
+          registrationDate: new Date().toISOString(),
+          type: '',
+          completedProfile: false
+        };
+
+        await this.userService.createUser(result.user.uid, basicUserData);
+
+        // Redirigir a selección de tipo de usuario
+        return { user: result.user, needsTypeSelection: true };
+      }
+
+      // Si ya tiene tipo definido pero perfil incompleto
+      if (userDoc && !userDoc['completedProfile']) {
+        return { user: result.user, needsProfileCompletion: true, userType: userDoc['type'] };
+      }
+
+      return { user: result.user };
+    } catch (error) {
+      console.error('Error en login con Google:', error);
       throw error;
     }
   }

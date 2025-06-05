@@ -14,6 +14,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 })
 export class LoginComponent {
   loginForm: FormGroup;
+  googleLoading = false;
 
   constructor(
     private fb: FormBuilder,
@@ -36,6 +37,32 @@ export class LoginComponent {
       console.error('Error al iniciar sesión', error);
     }
   }
+
+  async loginWithGoogle() {
+  this.googleLoading = true;
+  try {
+    const result = await this.authService.loginWithGoogle();
+
+    if (result.needsTypeSelection) {
+      // Redirigir a selección de tipo de usuario
+      this.router.navigate(['/user-type-selector'], {
+        state: { googleUser: result.user }
+      });
+    } else if (result.needsProfileCompletion) {
+      // Redirigir a completar perfil según el tipo
+      this.router.navigate([`/register/${result.userType}`], {
+        state: { googleUser: result.user }
+      });
+    } else {
+      // Perfil completo, redirigir al feed
+      this.router.navigate(['/feed']);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  } finally {
+    this.googleLoading = false;
+  }
+}
 
   goToRegister() {
     this.router.navigate(['/register']);

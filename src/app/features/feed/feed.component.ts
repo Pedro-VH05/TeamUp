@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, Injector, runInInjectionContext }
 import { BehaviorSubject, Subscription, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, addDoc, collectionData, query, where, orderBy, doc, getDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, query, where, orderBy, doc, getDoc, updateDoc, arrayUnion, deleteDoc } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 import { Router } from '@angular/router';
@@ -31,6 +31,15 @@ export class FeedComponent implements OnInit, OnDestroy {
   isCreatingPost = false;
   errorMessage: string | null = null;
   showProfileMenu = false;
+  searchQuery = '';
+  searchResults: any[] = [];
+  isSearching = false;
+  searchError: string | null = null;
+  confirmationTitle: string = '';
+  confirmationMessage: string = '';
+  showConfirmationModal: boolean = false;
+  currentAction: 'deletePost' | 'deleteComment' | null = null;
+  actionPayload: any = null;
 
   showProfileModal = false;
   selectedProfile: any = null;
@@ -83,7 +92,14 @@ export class FeedComponent implements OnInit, OnDestroy {
           orderBy('createdAt', 'desc')
         );
         const posts = await firstValueFrom(collectionData(q, { idField: 'id' }));
-        this.posts$.next(posts as any[]);
+        const postsWithComments = (posts as any[]).map(post => {
+          return {
+            ...post,
+            newComment: '',
+            comments: post.comments || []
+          };
+        });
+        this.posts$.next(postsWithComments);
       });
     } catch (error: any) {
       console.error('Error al cargar posts:', error);
@@ -91,6 +107,42 @@ export class FeedComponent implements OnInit, OnDestroy {
       this.posts$.next([]);
     } finally {
       this.isLoadingPosts = false;
+    }
+  }
+
+  async addComment(post: any) {
+    if (!post.newComment?.trim() || !this.currentUser) return;
+
+    try {
+      const commentData = {
+        text: post.newComment.trim(),
+        authorId: this.currentUser.uid,
+        authorName: this.getDisplayName(this.currentUser),
+        authorPhoto: this.getProfileImage(this.currentUser),
+        createdAt: new Date().toISOString()
+      };
+
+      const postRef = doc(this.firestore, 'posts', post.id);
+      await updateDoc(postRef, {
+        comments: arrayUnion(commentData)
+      });
+
+      const currentPosts = this.posts$.value;
+      const updatedPosts = currentPosts.map(p => {
+        if (p.id === post.id) {
+          return {
+            ...p,
+            comments: [...(p.comments || []), commentData],
+            newComment: ''
+          };
+        }
+        return p;
+      });
+
+      this.posts$.next(updatedPosts);
+    } catch (error) {
+      console.error('Error al añadir comentario:', error);
+      this.errorMessage = 'Error al publicar el comentario';
     }
   }
 
@@ -126,6 +178,59 @@ export class FeedComponent implements OnInit, OnDestroy {
     }
   }
 
+  async onSearchInput(): Promise<void> {
+    if (!this.searchQuery.trim()) {
+      this.searchResults = [];
+      return;
+    }
+
+    this.isSearching = true;
+    this.searchError = null;
+
+    try {
+      const searchTerm = this.searchQuery.toLowerCase().trim();
+
+      await runInInjectionContext(this.injector, async () => {
+        const playersRef = collection(this.firestore, 'users');
+        const playersQuery = query(
+          playersRef,
+          where('type', '==', 'player'),
+          orderBy('firstName')
+        );
+        const playersSnapshot = await firstValueFrom(collectionData(playersQuery, { idField: 'id' }));
+
+        const teamsRef = collection(this.firestore, 'users');
+        const teamsQuery = query(
+          teamsRef,
+          where('type', '==', 'team'),
+          orderBy('teamName')
+        );
+        const teamsSnapshot = await firstValueFrom(collectionData(teamsQuery, { idField: 'id' }));
+
+        const allUsers = [...playersSnapshot as any[], ...teamsSnapshot as any[]];
+
+        this.searchResults = allUsers.filter(user => {
+          if (user.type === 'player') {
+            const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+            return fullName.includes(searchTerm);
+          } else {
+            return user.teamName.toLowerCase().includes(searchTerm);
+          }
+        }).sort((a, b) => {
+          const nameA = this.getDisplayName(a).toLowerCase();
+          const nameB = this.getDisplayName(b).toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      });
+    } catch (error) {
+      console.error('Error en búsqueda:', error);
+      this.searchError = 'Error al realizar la búsqueda';
+      this.searchResults = [];
+    } finally {
+      this.isSearching = false;
+    }
+  }
+
   closeProfileModal(): void {
     this.showProfileModal = false;
     this.selectedProfile = null;
@@ -154,14 +259,14 @@ export class FeedComponent implements OnInit, OnDestroy {
 
   getProfileImage(user: any): string {
     return user.type === 'team' ? (user.teamLogoUrl || '/user-profile.jpg') :
-                                (user.profilePictureUrl || '/user-profile.jpg');
+      (user.profilePictureUrl || '/user-profile.jpg');
   }
 
   navigateToMessages(recipientId: string): void {
     this.closeProfileModal();
     this.router.navigate(['/messages'], {
       queryParams: { recipient: recipientId }
-  });
+    });
   }
 
   navigateToMessagesPage(): void {
@@ -218,6 +323,102 @@ export class FeedComponent implements OnInit, OnDestroy {
       this.errorMessage = 'Error al crear la publicación';
     } finally {
       this.isCreatingPost = false;
+    }
+  }
+
+  // Función auxiliar para comparar comentarios
+  private commentsEqual(comment1: any, comment2: any): boolean {
+    return (
+      comment1.text === comment2.text &&
+      comment1.authorId === comment2.authorId &&
+      comment1.createdAt === comment2.createdAt
+    );
+  }
+
+  private showConfirmation(title: string, message: string, action: 'deletePost' | 'deleteComment', payload: any): void {
+    this.confirmationTitle = title;
+    this.confirmationMessage = message;
+    this.currentAction = action;
+    this.actionPayload = payload;
+    this.showConfirmationModal = true;
+  }
+
+  cancelAction(): void {
+    this.showConfirmationModal = false;
+    this.currentAction = null;
+    this.actionPayload = null;
+  }
+
+  confirmAction(): void {
+    if (this.currentAction === 'deletePost') {
+      this.deletePostConfirmed(this.actionPayload);
+    } else if (this.currentAction === 'deleteComment') {
+      this.deleteCommentConfirmed(this.actionPayload.postId, this.actionPayload.comment);
+    }
+    this.showConfirmationModal = false;
+  }
+
+  // Modifica los métodos de eliminación
+  deletePost(postId: string): void {
+    this.showConfirmation(
+      'Eliminar publicación',
+      '¿Estás seguro de que quieres eliminar esta publicación? Esta acción no se puede deshacer.',
+      'deletePost',
+      postId
+    );
+  }
+
+  private async deletePostConfirmed(postId: string): Promise<void> {
+    try {
+      const postRef = doc(this.firestore, 'posts', postId);
+      await deleteDoc(postRef);
+
+      const currentPosts = this.posts$.value;
+      const updatedPosts = currentPosts.filter(post => post.id !== postId);
+      this.posts$.next(updatedPosts);
+    } catch (error) {
+      console.error('Error al eliminar el post:', error);
+      this.errorMessage = 'Error al eliminar la publicación';
+    }
+  }
+
+  deleteComment(postId: string, comment: any): void {
+    this.showConfirmation(
+      'Eliminar comentario',
+      '¿Estás seguro de que quieres eliminar este comentario? Esta acción no se puede deshacer.',
+      'deleteComment',
+      { postId, comment }
+    );
+  }
+
+  private async deleteCommentConfirmed(postId: string, commentToDelete: any): Promise<void> {
+    try {
+      const postRef = doc(this.firestore, 'posts', postId);
+      const postSnap = await getDoc(postRef);
+      if (!postSnap.exists()) return;
+
+      const postData = postSnap.data();
+      const updatedComments = postData['comments'].filter(
+        (comment: any) => !this.commentsEqual(comment, commentToDelete)
+      );
+
+      await updateDoc(postRef, { comments: updatedComments });
+
+      const currentPosts = this.posts$.value;
+      const updatedPosts = currentPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            comments: post.comments.filter((comment: any) => !this.commentsEqual(comment, commentToDelete))
+          };
+        }
+        return post;
+      });
+
+      this.posts$.next(updatedPosts);
+    } catch (error) {
+      console.error('Error al eliminar el comentario:', error);
+      this.errorMessage = 'Error al eliminar el comentario';
     }
   }
 

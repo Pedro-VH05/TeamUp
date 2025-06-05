@@ -83,14 +83,14 @@ export class RegisterPlayerComponent {
   async registerPlayer() {
     if (this.basicForm.invalid || this.sportsForm.invalid) return;
 
-    const basicData = this.basicForm.value;
+    const { password, confirmPassword, ...basicData } = this.basicForm.value;
     const sportsData = this.sportsForm.value;
 
     try {
       await this.authService.registerPlayer(
         basicData,
         sportsData,
-        basicData.password
+        password
       );
       this.router.navigate(['/feed']);
     } catch (error) {

@@ -24,10 +24,10 @@
   .logo-section {
     display: flex;
     align-items: center;
+    justify-content: center;
 
-    .logo {
-      height: 40px;
-      margin-right: 10px;
+    .app-logo {
+      height: 50px;
     }
 
     .app-name {
@@ -416,6 +416,27 @@
     font-family: 'Zain', sans-serif;
   }
 }
+
+.tick {
+  margin-left: 6px;
+  font-style: normal;
+  color: gray;
+  display: inline-block;
+  position: relative;
+}
+
+.tick::before {
+  content: '✓';
+}
+
+.tick.double::after {
+  content: '✓';
+  position: absolute;
+  left: 6px;
+  top: 0;
+  color: #4fc3f7;
+}
+
 
 .profile-overlay {
   position: fixed;

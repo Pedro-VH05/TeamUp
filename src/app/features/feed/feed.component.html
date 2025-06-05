@@ -1,12 +1,28 @@
 <div class="landing-container">
   <header class="header">
     <div class="logo-section">
-      <img src="assets/logo.png" alt="Logo" class="logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" class="app-logo">
+        <path fill="#f2ac29"
+          d="M316.5,103.5C352.335,103.167 369.168,120.833 367,156.5C362.571,172.595 352.404,183.095 336.5,188C309.05,192.863 291.217,182.03 283,155.5C279.9,128.799 291.067,111.466 316.5,103.5Z" />
+        <path fill="#f2ac29"
+          d="M342.5,213.5C346.03,212.989 349.196,213.656 352,215.5C359.492,253.629 367.492,291.629 376,329.5C425.01,359.183 474.01,388.849 523,418.5C558.874,404.232 594.874,390.232 631,376.5C637.322,383.777 640.156,392.11 639.5,401.5C599.833,417.25 560,432.583 520,447.5C463.85,414.091 407.85,380.425 352,346.5C343.274,304.476 334.44,262.476 325.5,220.5C326.779,218.854 328.445,217.687 330.5,217C334.686,216.05 338.686,214.884 342.5,213.5Z" />
+        <path fill="#f2ac29"
+          d="M473.5,234.5C501.107,249.972 528.44,265.972 555.5,282.5C539.752,309.665 523.752,336.665 507.5,363.5C480.335,347.752 453.335,331.752 426.5,315.5C442.443,288.609 458.109,261.609 473.5,234.5Z" />
+        <path fill="#f2ac29"
+          d="M365.5,397.5C366.552,397.351 367.552,397.517 368.5,398C398.351,425.351 428.351,452.518 458.5,479.5C458.72,518.485 458.72,557.485 458.5,596.5C455.763,597.031 453.096,597.864 450.5,599C419.848,613.91 389.014,628.41 358,642.5C330.503,637.1 303.003,631.767 275.5,626.5C275.794,617.88 277.461,609.546 280.5,601.5C281.333,601.167 282.167,600.833 283,600.5C306.809,605.306 330.643,609.973 354.5,614.5C379.828,602.836 405.162,591.169 430.5,579.5C431.955,550.513 432.455,521.513 432,492.5C410.549,471.795 388.549,451.795 366,432.5C343.243,450.469 320.743,468.803 298.5,487.5C270.203,486.841 241.87,486.175 213.5,485.5C195.667,465.167 177.833,444.833 160,424.5C159.333,423.5 159.333,422.5 160,421.5C161.793,418.705 163.96,416.205 166.5,414C170.324,410.921 174.324,408.088 178.5,405.5C195.029,423.196 211.029,441.363 226.5,460C247.833,460.667 269.167,460.667 290.5,460C315.571,439.148 340.571,418.315 365.5,397.5Z" />
+      </svg>
       <span class="app-name">TeamUp</span>
     </div>
 
     <div class="header-actions">
-      <input type="text" placeholder="Buscar..." class="search-bar">
+      <input type="text" placeholder="Buscar..." class="search-bar" [(ngModel)]="searchQuery" (input)="onSearchInput()">
+      <div class="search-results" *ngIf="searchResults.length > 0">
+        <div *ngFor="let result of searchResults" class="search-result-item" (click)="viewProfile(result.id)">
+          <img [src]="getProfileImage(result)" alt="Profile" class="search-result-img">
+          <span>{{ getDisplayName(result) }}</span>
+          <span class="search-result-type">{{ result.type === 'player' ? 'Jugador' : 'Club' }}</span>
+        </div>
+      </div>
       <button class="messages-btn" (click)="navigateToMessagesPage()">Mensajes</button>
     </div>
 
@@ -70,6 +86,9 @@
                   [class.team]="post.authorType === 'team'">
                   {{ post.authorType === 'player' ? 'Jugador' : 'Club' }}
                 </span>
+                <button *ngIf="currentUser?.uid === post.authorId" (click)="deletePost(post.id)" class="delete-btn">
+                  Eliminar
+                </button>
               </div>
               <div class="post-metadata">
                 <span class="post-sport">{{ post.sport }}</span>
@@ -80,6 +99,32 @@
           <div class="post-content">
             <p>{{ post.text }}</p>
             <img *ngIf="post.imageUrl" [src]="post.imageUrl" alt="Post image" class="post-image">
+          </div>
+
+          <div class="comments-section">
+            <div class="comment-input">
+              <input type="text" [(ngModel)]="post.newComment" placeholder="Escribe un comentario..."
+                class="comment-text">
+              <button (click)="addComment(post)" class="comment-btn" [disabled]="!post.newComment?.trim()">
+                Comentar
+              </button>
+            </div>
+
+            <div *ngIf="post.comments && post.comments.length > 0" class="comments-list">
+              <div *ngFor="let comment of post.comments" class="comment-item">
+                <img [src]="comment.authorPhoto || 'assets/user-profile.jpg'" alt="Comment author"
+                  class="comment-author-img">
+                <div class="comment-content">
+                  <span class="comment-author-name">{{ comment.authorName }}</span>
+                  <p class="comment-text">{{ comment.text }}</p>
+                  <span class="comment-date">{{ comment.createdAt | date:'short' }}</span>
+                  <button *ngIf="currentUser?.uid === comment.authorId" (click)="deleteComment(post.id, comment)"
+                    class="delete-comment-btn">
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -136,4 +181,14 @@
       </div>
     </div>
   </div>
+  <div class="confirmation-overlay" *ngIf="showConfirmationModal">
+  <div class="confirmation-modal" (click)="$event.stopPropagation()">
+    <h3>{{ confirmationTitle }}</h3>
+    <p>{{ confirmationMessage }}</p>
+    <div class="confirmation-buttons">
+      <button class="cancel-btn" (click)="cancelAction()">Cancelar</button>
+      <button class="confirm-btn" (click)="confirmAction()">Confirmar</button>
+    </div>
+  </div>
+</div>
 </div>

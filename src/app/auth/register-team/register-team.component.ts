@@ -124,7 +124,7 @@ export class RegisterTeamComponent {
   async registerTeam() {
     if (this.basicForm.invalid || this.sportsForm.invalid) return;
 
-    const basicData = this.basicForm.value;
+    const { password, confirmPassword, ...basicData } = this.basicForm.value;
     const sportsData = this.sportsForm.value;
 
     try {

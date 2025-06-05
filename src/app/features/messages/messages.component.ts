@@ -1,12 +1,13 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc, getDocs, writeBatch, arrayUnion } from '@angular/fire/firestore';
 import { AuthService } from '../../core/services/auth.service';
 import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 
 interface Message {
+  seenBy: any;
   id?: string;
   text: string;
   senderId: string;
@@ -55,6 +56,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   selectedProfile: any = null;
   isLoadingProfile = false;
   profileError: string | null = null;
+  conversationRecipientId!: string;
 
   ngOnInit(): void {
     this.routeSub = this.route.queryParams.subscribe(params => {
@@ -172,7 +174,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
     ) as Observable<Conversation[]>;
   }
 
-  selectConversation(conversationId: string): void {
+  async selectConversation(conversationId: string): Promise<void> {
     this.selectedConversation = conversationId;
     this.recipientId = null;
 
@@ -198,6 +200,14 @@ export class MessagesComponent implements OnInit, OnDestroy {
         });
       })
     ) as Observable<Message[]>;
+
+    this.conversations$?.subscribe(convs => {
+      const conv = convs.find(c => c.id === conversationId);
+      if (conv) {
+        this.conversationRecipientId = conv.userId;
+      }
+    });
+    this.markMessagesAsSeen(conversationId);
   }
 
   private formatMessageDate(date: Date): string {
@@ -218,7 +228,8 @@ export class MessagesComponent implements OnInit, OnDestroy {
         senderName: this.getDisplayName(this.currentUser),
         senderPhoto: this.getProfileImage(this.currentUser),
         timestamp: serverTimestamp(),
-        sport: this.currentUser.sport
+        sport: this.currentUser.sport,
+        seenBy: [this.currentUser.uid]
       };
 
       const messagesRef = collection(this.firestore, 'conversations', this.selectedConversation, 'messages');
@@ -281,6 +292,25 @@ export class MessagesComponent implements OnInit, OnDestroy {
       queryParams: { recipient: recipientId }
     });
   }
+
+  async markMessagesAsSeen(conversationId: string): Promise<void> {
+    const messagesRef = collection(this.firestore, 'conversations', conversationId, 'messages');
+    const snapshot = await getDocs(query(messagesRef));
+
+    const batch = writeBatch(this.firestore);
+
+    snapshot.forEach(docSnap => {
+      const msg = docSnap.data();
+      if (!msg['seenBy']?.includes(this.currentUser.uid)) {
+        batch.update(docSnap.ref, {
+          seenBy: arrayUnion(this.currentUser.uid)
+        });
+      }
+    });
+
+    await batch.commit();
+  }
+
 
   getDisplayName(user: any): string {
     return user.type === 'team' ? user.teamName : `${user.firstName} ${user.lastName}`;

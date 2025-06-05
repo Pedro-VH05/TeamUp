@@ -1,25 +1,24 @@
-body {
+:host {
+  display: block;
+  min-height: 100vh;
+  background: #f2ac29;
   background-image: url('/fondo.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  padding: 2rem;
 }
 
 .registration-container {
   max-width: 800px;
   margin: auto;
   padding: 3rem;
-  background: #fffbf5;
+  background: rgba(255, 251, 245, 0.95);
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(9, 7, 4, 0.2);
   font-family: 'Zain', sans-serif;
-}
-
-:host {
-  display: block;
-  min-height: 100vh;
-  background: #f2ac29;
-  padding: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 .progress-bar {
