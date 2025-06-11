@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Firestore, doc, setDoc, getDoc } from '@angular/fire/firestore';
+import { Firestore, doc, setDoc, getDoc, collection, query, where, getDocs } from '@angular/fire/firestore';
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 
 @Injectable({
@@ -10,7 +10,6 @@ export class UserService {
   private storage = inject(Storage);
 
   async createUser(uid: string, userData: any) {
-    // Subir foto de perfil si existe
     if (userData.profilePicture) {
       const filePath = `profile_pictures/${uid}_${Date.now()}`;
       const fileRef = ref(this.storage, filePath);
@@ -24,8 +23,16 @@ export class UserService {
     await setDoc(doc(this.firestore, 'users', uid), userData);
   }
 
-  async getUserData(uid: string) {
-    const userDoc = await getDoc(doc(this.firestore, 'users', uid));
-    return userDoc.exists() ? userDoc.data() : null;
+  async getUserByEmail(email: string): Promise<any> {
+    const usersRef = collection(this.firestore, 'users');
+    const q = query(usersRef, where('email', '==', email));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot;
+  }
+
+  async getUserData(uid: string): Promise<any> {
+    const docRef = doc(this.firestore, 'users', uid);
+    const docSnap = await getDoc(docRef);
+    return docSnap.exists() ? docSnap.data() : null;
   }
 }

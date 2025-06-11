@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
@@ -10,11 +10,11 @@ import { ReactiveFormsModule } from '@angular/forms';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule]
+  imports: [CommonModule, ReactiveFormsModule, FormsModule]
 })
 export class LoginComponent {
   loginForm: FormGroup;
-  googleLoading = false;
+  errorMessage = '';
 
   constructor(
     private fb: FormBuilder,
@@ -29,42 +29,32 @@ export class LoginComponent {
 
   async login() {
     if (this.loginForm.invalid) return;
+
     const { email, password } = this.loginForm.value;
+    this.errorMessage = '';
+
     try {
       await this.authService.login(email, password);
       this.router.navigate(['/feed']);
-    } catch (error) {
-      console.error('Error al iniciar sesión', error);
+    } catch (error: any) {
+      this.errorMessage = this.getAuthErrorMessage(error);
     }
   }
-
-  async loginWithGoogle() {
-  this.googleLoading = true;
-  try {
-    const result = await this.authService.loginWithGoogle();
-
-    if (result.needsTypeSelection) {
-      // Redirigir a selección de tipo de usuario
-      this.router.navigate(['/user-type-selector'], {
-        state: { googleUser: result.user }
-      });
-    } else if (result.needsProfileCompletion) {
-      // Redirigir a completar perfil según el tipo
-      this.router.navigate([`/register/${result.userType}`], {
-        state: { googleUser: result.user }
-      });
-    } else {
-      // Perfil completo, redirigir al feed
-      this.router.navigate(['/feed']);
-    }
-  } catch (error) {
-    console.error('Error:', error);
-  } finally {
-    this.googleLoading = false;
-  }
-}
 
   goToRegister() {
     this.router.navigate(['/register']);
+  }
+
+  private getAuthErrorMessage(error: any): string {
+    switch (error.code || error.message) {
+      case 'auth/user-not-found':
+        return 'Usuario no registrado';
+      case 'auth/wrong-password':
+        return 'Contraseña incorrecta';
+      case 'No se encontraron datos de usuario':
+        return 'Cuenta incompleta, por favor contacta con soporte';
+      default:
+        return 'Error al iniciar sesión: ' + (error.message || 'Inténtalo de nuevo');
+    }
   }
 }

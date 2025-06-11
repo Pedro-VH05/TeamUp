@@ -153,10 +153,25 @@
           *ngIf="currentUser?.uid !== selectedProfile.uid">
           Enviar mensaje
         </button>
+
+        <button class="delete-user-btn" (click)="deleteUser(selectedProfile.uid)"
+          *ngIf="shouldShowDeleteButton(selectedProfile)">
+          Eliminar usuario
+        </button>
       </div>
 
       <div *ngIf="profileError" class="error-message">
         {{ profileError }}
+      </div>
+    </div>
+  </div>
+  <div class="confirmation-overlay" *ngIf="showConfirmationModal">
+    <div class="confirmation-modal" (click)="$event.stopPropagation()">
+      <h3>{{ confirmationTitle }}</h3>
+      <p>{{ confirmationMessage }}</p>
+      <div class="confirmation-buttons">
+        <button class="cancel-btn" (click)="cancelAction()">Cancelar</button>
+        <button class="confirm-btn" (click)="confirmAction()">Confirmar</button>
       </div>
     </div>
   </div>

@@ -83,10 +83,12 @@
                   {{ post.authorName }}
                 </span>
                 <span class="author-type-badge" [class.player]="post.authorType === 'player'"
-                  [class.team]="post.authorType === 'team'">
-                  {{ post.authorType === 'player' ? 'Jugador' : 'Club' }}
+                  [class.team]="post.authorType === 'team'" [class.admin]="post.authorType === 'admin'">
+                  {{ post.authorType === 'player' ? 'Jugador' :
+                  post.authorType === 'team' ? 'Club' : 'Administrador' }}
                 </span>
-                <button *ngIf="currentUser?.uid === post.authorId" (click)="deletePost(post.id)" class="delete-btn">
+                <button *ngIf="currentUser?.uid === post.authorId || currentUser?.type === 'admin'"
+                  (click)="deletePost(post.id)" class="delete-btn">
                   Eliminar
                 </button>
               </div>
@@ -118,8 +120,8 @@
                   <span class="comment-author-name">{{ comment.authorName }}</span>
                   <p class="comment-text">{{ comment.text }}</p>
                   <span class="comment-date">{{ comment.createdAt | date:'short' }}</span>
-                  <button *ngIf="currentUser?.uid === comment.authorId" (click)="deleteComment(post.id, comment)"
-                    class="delete-comment-btn">
+                  <button *ngIf="currentUser?.uid === comment.authorId || currentUser?.type === 'admin'"
+                    (click)="deleteComment(post.id, comment)" class="delete-comment-btn">
                     ×
                   </button>
                 </div>
@@ -174,6 +176,11 @@
           *ngIf="currentUser?.uid !== selectedProfile.uid">
           Enviar mensaje
         </button>
+
+        <button class="delete-user-btn" (click)="deleteUser(selectedProfile.uid)"
+          *ngIf="shouldShowDeleteButton(selectedProfile)">
+          Eliminar usuario
+        </button>
       </div>
 
       <div *ngIf="profileError" class="error-message">
@@ -182,13 +189,13 @@
     </div>
   </div>
   <div class="confirmation-overlay" *ngIf="showConfirmationModal">
-  <div class="confirmation-modal" (click)="$event.stopPropagation()">
-    <h3>{{ confirmationTitle }}</h3>
-    <p>{{ confirmationMessage }}</p>
-    <div class="confirmation-buttons">
-      <button class="cancel-btn" (click)="cancelAction()">Cancelar</button>
-      <button class="confirm-btn" (click)="confirmAction()">Confirmar</button>
+    <div class="confirmation-modal" (click)="$event.stopPropagation()">
+      <h3>{{ confirmationTitle }}</h3>
+      <p>{{ confirmationMessage }}</p>
+      <div class="confirmation-buttons">
+        <button class="cancel-btn" (click)="cancelAction()">Cancelar</button>
+        <button class="confirm-btn" (click)="confirmAction()">Confirmar</button>
+      </div>
     </div>
   </div>
-</div>
 </div>

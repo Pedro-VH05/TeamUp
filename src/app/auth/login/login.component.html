@@ -37,13 +37,12 @@
             <p class="register-link">¿No tienes una cuenta? <a (click)="goToRegister()">Crea tu cuenta</a></p>
             <div>
               <button type="submit" class="login-btn">Iniciar sesión</button>
-              <button type="button" class="google-btn" (click)="loginWithGoogle()" [disabled]="googleLoading">
-                <img src="assets/google-icon.svg" alt="Google" class="google-icon">
-                {{ googleLoading ? 'Iniciando...' : 'Iniciar con Google' }}
-              </button>
             </div>
           </div>
         </form>
+        <div *ngIf="errorMessage" class="error-message">
+          {{ errorMessage }}
+        </div>
       </div>
     </div>
   </div>

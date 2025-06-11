@@ -89,7 +89,10 @@ export class RegisterPlayerComponent {
     try {
       await this.authService.registerPlayer(
         basicData,
-        sportsData,
+        {
+          ...sportsData,
+          profilePicture: this.sportsForm.get('profilePicture')?.value
+        },
         password
       );
       this.router.navigate(['/feed']);

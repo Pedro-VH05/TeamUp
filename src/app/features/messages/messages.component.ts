@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc, getDocs, writeBatch, arrayUnion } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc, getDocs, writeBatch, arrayUnion, deleteDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../core/services/auth.service';
 import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -57,6 +57,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
   isLoadingProfile = false;
   profileError: string | null = null;
   conversationRecipientId!: string;
+  showConfirmationModal = false;
+  confirmationTitle = '';
+  confirmationMessage = '';
+  currentAction: 'deleteUser' | null = null;
+  actionPayload: any = null
 
   ngOnInit(): void {
     this.routeSub = this.route.queryParams.subscribe(params => {
@@ -246,6 +251,82 @@ export class MessagesComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error sending message:', error);
     }
+  }
+
+  deleteUser(userId: string): void {
+    this.showConfirmation(
+      'Eliminar usuario',
+      '¿Estás seguro de que quieres eliminar este usuario y todo su contenido? Esta acción no se puede deshacer.',
+      'deleteUser',
+      userId
+    );
+  }
+
+  private showConfirmation(title: string, message: string, action: 'deleteUser', payload: any): void {
+    this.confirmationTitle = title;
+    this.confirmationMessage = message;
+    this.currentAction = action;
+    this.actionPayload = payload;
+    this.showConfirmationModal = true;
+  }
+
+  cancelAction(): void {
+    this.showConfirmationModal = false;
+    this.currentAction = null;
+    this.actionPayload = null;
+  }
+
+  async confirmAction(): Promise<void> {
+    if (this.currentAction === 'deleteUser') {
+      await this.deleteUserConfirmed(this.actionPayload);
+    }
+    this.showConfirmationModal = false;
+  }
+
+  async deleteUserConfirmed(userId: string): Promise<void> {
+    try {
+      // 1. Eliminar todas las conversaciones del usuario
+      const conversationsRef = collection(this.firestore, 'conversations');
+      const userConversationsQuery = query(
+        conversationsRef,
+        where('participants', 'array-contains', userId)
+      );
+      const conversations = await firstValueFrom(collectionData(userConversationsQuery, { idField: 'id' }));
+
+      // Eliminar cada conversación y sus mensajes
+      const deleteOperations = conversations.map(async conv => {
+        // Primero eliminar todos los mensajes de la conversación
+        const messagesRef = collection(this.firestore, 'conversations', conv.id, 'messages');
+        const messages = await firstValueFrom(collectionData(messagesRef, { idField: 'id' }));
+
+        const batch = writeBatch(this.firestore);
+        messages.forEach(msg => {
+          batch.delete(doc(this.firestore, 'conversations', conv.id, 'messages', msg.id));
+        });
+        await batch.commit();
+
+        // Luego eliminar la conversación
+        await deleteDoc(doc(this.firestore, 'conversations', conv.id));
+      });
+
+      await Promise.all(deleteOperations);
+
+      // 2. Cerrar el modal de perfil
+      this.closeProfileModal();
+
+      // 3. Recargar conversaciones
+      if (this.currentUser) {
+        this.loadConversations(this.currentUser.uid, this.currentUser.sport);
+      }
+
+      console.log('Usuario y conversaciones eliminadas con éxito');
+    } catch (error) {
+      console.error('Error al eliminar usuario y conversaciones:', error);
+    }
+  }
+
+  shouldShowDeleteButton(profile: any): boolean {
+    return this.currentUser?.type === 'admin' && this.currentUser?.uid !== profile.uid;
   }
 
   toggleProfileMenu(event: Event): void {

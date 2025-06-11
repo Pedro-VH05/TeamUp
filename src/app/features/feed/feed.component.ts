@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, Injector, runInInjectionContext }
 import { BehaviorSubject, Subscription, firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, addDoc, collectionData, query, where, orderBy, doc, getDoc, updateDoc, arrayUnion, deleteDoc } from '@angular/fire/firestore';
+import { Firestore, collection, addDoc, collectionData, query, where, orderBy, doc, getDoc, updateDoc, arrayUnion, deleteDoc, writeBatch } from '@angular/fire/firestore';
 import { FormsModule } from '@angular/forms';
 import { Storage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
 import { Router } from '@angular/router';
@@ -38,7 +38,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   confirmationTitle: string = '';
   confirmationMessage: string = '';
   showConfirmationModal: boolean = false;
-  currentAction: 'deletePost' | 'deleteComment' | null = null;
+  currentAction: 'deletePost' | 'deleteComment' | 'deleteUser' | null = null;
   actionPayload: any = null;
 
   showProfileModal = false;
@@ -254,6 +254,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   }
 
   getDisplayName(user: any): string {
+    if (user.type === 'admin') return `[Admin] ${user.firstName} ${user.lastName}`;
     return user.type === 'team' ? user.teamName : `${user.firstName} ${user.lastName}`;
   }
 
@@ -278,6 +279,11 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.showProfileMenu = !this.showProfileMenu;
   }
 
+  shouldShowDeleteButton(profile: any): boolean {
+    return this.currentUser?.type === 'admin' && this.currentUser?.uid !== profile.uid;
+  }
+
+
   async createPost(): Promise<void> {
     if (this.isCreatingPost) return;
 
@@ -294,9 +300,10 @@ export class FeedComponent implements OnInit, OnDestroy {
       let imageUrl = '';
 
       if (this.selectedFile) {
-        const storageRef = ref(this.storage, `posts/${Date.now()}_${this.selectedFile.name}`);
-        const snapshot = await uploadBytes(storageRef, this.selectedFile);
-        imageUrl = await getDownloadURL(snapshot.ref);
+        const filePath = `posts/${this.currentUser.uid}/${Date.now()}_${this.selectedFile.name}`;
+        const storageRef = ref(this.storage, filePath);
+        await uploadBytes(storageRef, this.selectedFile);
+        imageUrl = await getDownloadURL(storageRef);
       }
 
       const postData = {
@@ -326,7 +333,6 @@ export class FeedComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Función auxiliar para comparar comentarios
   private commentsEqual(comment1: any, comment2: any): boolean {
     return (
       comment1.text === comment2.text &&
@@ -335,7 +341,7 @@ export class FeedComponent implements OnInit, OnDestroy {
     );
   }
 
-  private showConfirmation(title: string, message: string, action: 'deletePost' | 'deleteComment', payload: any): void {
+  private showConfirmation(title: string, message: string, action: 'deletePost' | 'deleteComment' | 'deleteUser', payload: any): void {
     this.confirmationTitle = title;
     this.confirmationMessage = message;
     this.currentAction = action;
@@ -354,11 +360,12 @@ export class FeedComponent implements OnInit, OnDestroy {
       this.deletePostConfirmed(this.actionPayload);
     } else if (this.currentAction === 'deleteComment') {
       this.deleteCommentConfirmed(this.actionPayload.postId, this.actionPayload.comment);
+    } else if (this.currentAction === 'deleteUser') {
+      this.deleteUserConfirmed(this.actionPayload);
     }
     this.showConfirmationModal = false;
   }
 
-  // Modifica los métodos de eliminación
   deletePost(postId: string): void {
     this.showConfirmation(
       'Eliminar publicación',
@@ -366,6 +373,67 @@ export class FeedComponent implements OnInit, OnDestroy {
       'deletePost',
       postId
     );
+  }
+
+  async deleteUserConfirmed(userId: string): Promise<void> {
+    try {
+      // 1. Eliminar todas las publicaciones del usuario
+      const postsRef = collection(this.firestore, 'posts');
+      const userPostsQuery = query(postsRef, where('authorId', '==', userId));
+      const userPosts = await firstValueFrom(collectionData(userPostsQuery, { idField: 'id' }));
+
+      const deletePosts = userPosts.map(post =>
+        deleteDoc(doc(this.firestore, 'posts', post.id))
+      );
+      await Promise.all(deletePosts);
+
+      // 2. Eliminar comentarios del usuario en otras publicaciones
+      const allPostsQuery = query(postsRef);
+      const allPosts = await firstValueFrom(collectionData(allPostsQuery, { idField: 'id' }));
+
+      const updatePosts = allPosts
+        .filter(post => post['comments']?.some((c: any) => c.authorId === userId))
+        .map(async post => {
+          const updatedComments = post['comments'].filter((c: any) => c.authorId !== userId);
+          await updateDoc(doc(this.firestore, 'posts', post.id), { comments: updatedComments });
+        });
+      await Promise.all(updatePosts);
+
+      // 3. Eliminar conversaciones del usuario (igual que en messages.component.ts)
+      const conversationsRef = collection(this.firestore, 'conversations');
+      const userConversationsQuery = query(
+        conversationsRef,
+        where('participants', 'array-contains', userId)
+      );
+      const conversations = await firstValueFrom(collectionData(userConversationsQuery, { idField: 'id' }));
+
+      const deleteConversations = conversations.map(async conv => {
+        // Eliminar mensajes primero
+        const messagesRef = collection(this.firestore, 'conversations', conv.id, 'messages');
+        const messages = await firstValueFrom(collectionData(messagesRef, { idField: 'id' }));
+
+        const batch = writeBatch(this.firestore);
+        messages.forEach(msg => {
+          batch.delete(doc(this.firestore, 'conversations', conv.id, 'messages', msg.id));
+        });
+        await batch.commit();
+
+        // Luego eliminar la conversación
+        await deleteDoc(doc(this.firestore, 'conversations', conv.id));
+      });
+      await Promise.all(deleteConversations);
+
+      // 4. Eliminar el usuario de Firestore
+      await deleteDoc(doc(this.firestore, 'users', userId));
+
+      // 5. Cerrar el modal de perfil
+      this.closeProfileModal();
+
+      this.errorMessage = 'Usuario eliminado con éxito';
+    } catch (error) {
+      console.error('Error al eliminar usuario:', error);
+      this.errorMessage = 'Error al eliminar el usuario';
+    }
   }
 
   private async deletePostConfirmed(postId: string): Promise<void> {
@@ -388,6 +456,15 @@ export class FeedComponent implements OnInit, OnDestroy {
       '¿Estás seguro de que quieres eliminar este comentario? Esta acción no se puede deshacer.',
       'deleteComment',
       { postId, comment }
+    );
+  }
+
+  deleteUser(userId: string): void {
+    this.showConfirmation(
+      'Eliminar usuario',
+      '¿Estás seguro de que quieres eliminar este usuario y todo su contenido? Esta acción no se puede deshacer.',
+      'deleteUser',
+      userId
     );
   }
 

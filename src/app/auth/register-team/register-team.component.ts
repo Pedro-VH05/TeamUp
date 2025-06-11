@@ -128,30 +128,31 @@ export class RegisterTeamComponent {
     const sportsData = this.sportsForm.value;
 
     try {
-      // 1. Registrar al usuario (y autenticarlo)
-      await this.authService.registerTeam(basicData.email, basicData.password);
+      const userCredential = await this.authService.registerTeam(basicData.email, password);
+      const userId = userCredential.user.uid;
 
-      // 2. Subir logo si hay
-      let downloadURL: string | null = null;
+      let profilePictureUrl = '';
       if (this.selectedFile) {
-        const filePath = `profile_pictures/${new Date().getTime()}_${this.selectedFile.name}`;
+        const filePath = `profile_pictures/${userId}/${Date.now()}_${this.selectedFile.name}`;
         const fileRef = ref(this.storage, filePath);
         await uploadBytes(fileRef, this.selectedFile);
-        downloadURL = await getDownloadURL(fileRef);
+        profilePictureUrl = await getDownloadURL(fileRef);
       }
 
-      // 3. Guardar los datos del equipo (Firestore)
       const teamData = {
         ...basicData,
         ...sportsData,
-        teamLogo: downloadURL,
+        profilePictureUrl: profilePictureUrl || null,
+        teamLogoUrl: profilePictureUrl || null,
+        type: 'team',
         registrationDate: new Date().toISOString()
       };
+
       await this.authService.saveTeamData(teamData);
 
       this.router.navigate(['/feed']);
     } catch (error) {
-      console.error('Error durante el registro del equipo:', error);
+      console.error('Error en registro de equipo:', error);
     }
   }
 

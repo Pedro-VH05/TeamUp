@@ -1,15 +1,13 @@
 import { Injectable, inject } from '@angular/core';
-import { Auth, createUserWithEmailAndPassword, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut, User } from '@angular/fire/auth';
+import { Auth, createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from '@angular/fire/auth';
 import { Router } from '@angular/router';
 import { UserService } from './user.service';
-import { BehaviorSubject, distinctUntilChanged, Observable, take } from 'rxjs';
-import { signInWithRedirect } from 'firebase/auth';
+import { BehaviorSubject, distinctUntilChanged, Observable } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  [x: string]: any;
   private auth = inject(Auth);
   private router = inject(Router);
   private userService = inject(UserService);
@@ -76,7 +74,7 @@ export class AuthService {
 
   async registerTeam(email: string, password: string) {
     const userCredential = await createUserWithEmailAndPassword(this.auth, email, password);
-    return userCredential.user;
+    return userCredential;
   }
 
   async saveTeamData(teamData: any) {
@@ -98,8 +96,6 @@ export class AuthService {
     await this.userService.createUser(currentUser.uid, formattedData);
   }
 
-
-
   async login(email: string, password: string) {
     try {
       const userCredential = await signInWithEmailAndPassword(this.auth, email, password);
@@ -109,8 +105,7 @@ export class AuthService {
         throw new Error('No se encontraron datos de usuario');
       }
 
-      console.log('Usuario después de login:', userData);
-      this.currentUserSubject.next(userData);
+      this.currentUserSubject.next({ ...userCredential.user, ...userData });
       return userCredential.user;
     } catch (error) {
       console.error('Error en login:', error);
@@ -118,42 +113,9 @@ export class AuthService {
     }
   }
 
-  async loginWithGoogle() {
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(this.auth, provider);
-
-      // Verificar si el usuario es nuevo
-      const userDoc = await this.userService.getUserData(result.user.uid);
-
-      if (!userDoc) {
-        // Guardar datos básicos de Google en Firestore
-        const basicUserData = {
-          uid: result.user.uid,
-          email: result.user.email || '',
-          displayName: result.user.displayName || '',
-          photoURL: result.user.photoURL || '',
-          registrationDate: new Date().toISOString(),
-          type: '',
-          completedProfile: false
-        };
-
-        await this.userService.createUser(result.user.uid, basicUserData);
-
-        // Redirigir a selección de tipo de usuario
-        return { user: result.user, needsTypeSelection: true };
-      }
-
-      // Si ya tiene tipo definido pero perfil incompleto
-      if (userDoc && !userDoc['completedProfile']) {
-        return { user: result.user, needsProfileCompletion: true, userType: userDoc['type'] };
-      }
-
-      return { user: result.user };
-    } catch (error) {
-      console.error('Error en login con Google:', error);
-      throw error;
-    }
+  async isEmailRegistered(email: string): Promise<boolean> {
+    const users = await this.userService.getUserByEmail(email);
+    return !users.empty;
   }
 
   get currentUser$(): Observable<any> {
