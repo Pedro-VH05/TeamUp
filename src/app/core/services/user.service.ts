@@ -10,18 +10,17 @@ export class UserService {
   private storage = inject(Storage);
 
   async createUser(uid: string, userData: any) {
-    if (userData.profilePicture) {
-      const filePath = `profile_pictures/${uid}_${Date.now()}`;
-      const fileRef = ref(this.storage, filePath);
-      await uploadBytes(fileRef, userData.profilePicture);
-      userData.profilePictureUrl = await getDownloadURL(fileRef);
-      delete userData.profilePicture;
-    }
-
-    userData.uid = uid;
-
-    await setDoc(doc(this.firestore, 'users', uid), userData);
+  if (userData.profilePicture) {
+    const filePath = `profile_pictures/${uid}/${Date.now()}_${userData.profilePicture.name}`;
+    const fileRef = ref(this.storage, filePath);
+    await uploadBytes(fileRef, userData.profilePicture);
+    userData.profilePictureUrl = await getDownloadURL(fileRef);
+    delete userData.profilePicture;
   }
+
+  userData.uid = uid;
+  await setDoc(doc(this.firestore, 'users', uid), userData);
+}
 
   async getUserByEmail(email: string): Promise<any> {
     const usersRef = collection(this.firestore, 'users');

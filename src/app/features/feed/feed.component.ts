@@ -77,28 +77,30 @@ export class FeedComponent implements OnInit, OnDestroy {
     this.errorMessage = null;
 
     try {
-      const sport = this.currentUser.sport;
-      if (!sport) {
-        this.errorMessage = 'No tienes un deporte asignado';
-        this.posts$.next([]);
-        return;
-      }
-
       await runInInjectionContext(this.injector, async () => {
         const postsRef = collection(this.firestore, 'posts');
-        const q = query(
-          postsRef,
-          where('sport', '==', sport),
-          orderBy('createdAt', 'desc')
-        );
+        let q;
+
+        if (this.currentUser.type === 'admin') {
+          // Admin: cargar todas las publicaciones sin filtro de deporte
+          q = query(postsRef, orderBy('createdAt', 'desc'));
+        } else {
+          // Usuario normal: cargar solo publicaciones del deporte del usuario
+          const sport = this.currentUser.sport;
+          if (!sport) {
+            this.errorMessage = 'No tienes un deporte asignado';
+            this.posts$.next([]);
+            return;
+          }
+          q = query(postsRef, where('sport', '==', sport), orderBy('createdAt', 'desc'));
+        }
+
         const posts = await firstValueFrom(collectionData(q, { idField: 'id' }));
-        const postsWithComments = (posts as any[]).map(post => {
-          return {
-            ...post,
-            newComment: '',
-            comments: post.comments || []
-          };
-        });
+        const postsWithComments = (posts as any[]).map(post => ({
+          ...post,
+          newComment: '',
+          comments: post.comments || []
+        }));
         this.posts$.next(postsWithComments);
       });
     } catch (error: any) {
@@ -109,6 +111,7 @@ export class FeedComponent implements OnInit, OnDestroy {
       this.isLoadingPosts = false;
     }
   }
+
 
   async addComment(post: any) {
     if (!post.newComment?.trim() || !this.currentUser) return;
@@ -161,14 +164,27 @@ export class FeedComponent implements OnInit, OnDestroy {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-          this.selectedProfile = {
-            ...docSnap.data(),
-            id: docSnap.id,
-            uid: docSnap.id
-          };
-        } else {
-          this.profileError = 'Perfil no encontrado';
+        const data = docSnap.data();
+        // Convertir el objeto de categorías a array si es necesario
+        let categories = [];
+        if (data['categories']) {
+          // Si las categorías están como objeto (como en register-team.component.ts)
+          if (typeof data['categories'] === 'object' && !Array.isArray(data['categories'])) {
+            categories = Object.values(data['categories']);
+          } else {
+            categories = data['categories'];
+          }
         }
+
+        this.selectedProfile = {
+          ...data,
+          id: docSnap.id,
+          uid: docSnap.id,
+          categories: categories // Añadir las categorías procesadas
+        };
+      } else {
+        this.profileError = 'Perfil no encontrado';
+      }
       });
     } catch (error) {
       console.error('Error al cargar perfil:', error);
@@ -191,20 +207,26 @@ export class FeedComponent implements OnInit, OnDestroy {
       const searchTerm = this.searchQuery.toLowerCase().trim();
 
       await runInInjectionContext(this.injector, async () => {
-        const playersRef = collection(this.firestore, 'users');
-        const playersQuery = query(
-          playersRef,
-          where('type', '==', 'player'),
-          orderBy('firstName')
-        );
-        const playersSnapshot = await firstValueFrom(collectionData(playersQuery, { idField: 'id' }));
+        const usersRef = collection(this.firestore, 'users');
+        let playersQuery;
+        let teamsQuery;
 
-        const teamsRef = collection(this.firestore, 'users');
-        const teamsQuery = query(
-          teamsRef,
-          where('type', '==', 'team'),
-          orderBy('teamName')
-        );
+        if (this.currentUser.type === 'admin') {
+          // Admin: busca en todos los jugadores y equipos sin filtro de deporte
+          playersQuery = query(usersRef, where('type', '==', 'player'), orderBy('firstName'));
+          teamsQuery = query(usersRef, where('type', '==', 'team'), orderBy('teamName'));
+        } else {
+          // Usuario normal: busca solo en usuarios de su mismo deporte
+          const sport = this.currentUser.sport;
+          if (!sport) {
+            this.searchResults = [];
+            return;
+          }
+          playersQuery = query(usersRef, where('type', '==', 'player'), where('sport', '==', sport), orderBy('firstName'));
+          teamsQuery = query(usersRef, where('type', '==', 'team'), where('sport', '==', sport), orderBy('teamName'));
+        }
+
+        const playersSnapshot = await firstValueFrom(collectionData(playersQuery, { idField: 'id' }));
         const teamsSnapshot = await firstValueFrom(collectionData(teamsQuery, { idField: 'id' }));
 
         const allUsers = [...playersSnapshot as any[], ...teamsSnapshot as any[]];
@@ -231,6 +253,7 @@ export class FeedComponent implements OnInit, OnDestroy {
     }
   }
 
+
   closeProfileModal(): void {
     this.showProfileModal = false;
     this.selectedProfile = null;
@@ -254,7 +277,7 @@ export class FeedComponent implements OnInit, OnDestroy {
   }
 
   getDisplayName(user: any): string {
-    if (user.type === 'admin') return `[Admin] ${user.firstName} ${user.lastName}`;
+    if (user.type === 'admin') return `${user.firstName} ${user.lastName}`;
     return user.type === 'team' ? user.teamName : `${user.firstName} ${user.lastName}`;
   }
 

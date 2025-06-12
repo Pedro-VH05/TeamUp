@@ -41,18 +41,19 @@ export class AuthService {
   }
 
   async getCurrentUser(): Promise<any> {
-    if (!this.authInitialized) {
-      await new Promise(resolve => {
-        const sub = this.currentUser$.subscribe(user => {
-          if (this.authInitialized) {
-            sub.unsubscribe();
-            resolve(user);
-          }
-        });
+  if (!this.authInitialized) {
+    await new Promise<void>(resolve => {
+      const sub = this.currentUser$.subscribe(() => {
+        if (this.authInitialized) {
+          sub.unsubscribe();
+          resolve();
+        }
       });
-    }
-    return this.currentUserSubject.value;
+    });
   }
+  return this.currentUserSubject.value;
+}
+
 
   async registerPlayer(basicData: any, additionalData: any, password: string) {
     const userCredential = await createUserWithEmailAndPassword(

@@ -22,14 +22,180 @@ export class RegisterPlayerComponent {
   sportsForm: FormGroup;
 
   // Opciones para selects
-  sports = ['Fútbol', 'Baloncesto', 'Voleibol', 'Tenis', 'Pádel'];
+  sports = [
+    'Fútbol',
+    'Baloncesto',
+    'Voleibol',
+    'Fútbol Americano',
+    'Hockey sobre hielo',
+    'Rugby',
+    'Hockey sobre hierba',
+    'Críquet',
+    'Béisbol',
+    'Rugby League',
+    'Lacrosse',
+    'Balonmano',
+    'Fútbol sala',
+    'Fútbol australiano',
+    'Waterpolo'
+  ];
+
   positions = {
-    'Fútbol': ['Portero', 'Defensa', 'Centrocampista', 'Delantero'],
-    'Baloncesto': ['Base', 'Escolta', 'Alero', 'Ala-pívot', 'Pívot'],
-    'Voleibol': ['Colocador', 'Receptor', 'Central', 'Opuesto', 'Libero'],
-    'Tenis': ['Individual', 'Dobles'],
-    'Pádel': ['Drive', 'Reves']
+    'Fútbol': [
+      'Portero',
+      'Lateral derecho',
+      'Lateral izquierdo',
+      'Central',
+      'Líbero',
+      'Pivote defensivo',
+      'Interior derecho',
+      'Interior izquierdo',
+      'Mediocentro organizador',
+      'Mediapunta',
+      'Extremo derecho',
+      'Extremo izquierdo',
+      'Delantero centro',
+      'Segundo delantero'
+    ],
+    'Baloncesto': [
+      'Base',
+      'Escolta',
+      'Alero',
+      'Ala-pívot',
+      'Pívot'
+    ],
+    'Voleibol': [
+      'Colocador',
+      'Receptor atacante',
+      'Central',
+      'Opuesto',
+      'Líbero'
+    ],
+    'Fútbol Americano': [
+      'Quarterback',
+      'Running back',
+      'Fullback',
+      'Wide receiver',
+      'Tight end',
+      'Tackle',
+      'Guard',
+      'Center',
+      'Defensive tackle',
+      'Defensive end',
+      'Linebacker',
+      'Cornerback',
+      'Safety',
+      'Kicker',
+      'Punter',
+      'Long snapper',
+      'Returner'
+    ],
+    'Hockey sobre hielo': [
+      'Portero',
+      'Defensa izquierdo',
+      'Defensa derecho',
+      'Center',
+      'Ala izquierda',
+      'Ala derecha'
+    ],
+    'Rugby': [
+      'Pilar izquierdo',
+      'Pilar derecho',
+      'Hooker',
+      'Segunda línea',
+      'Flanker',
+      'Número 8',
+      'Medio de melé',
+      'Apertura',
+      'Centro',
+      'Ala',
+      'Zaguero'
+    ],
+    'Hockey sobre hierba': [
+      'Portero',
+      'Lateral',
+      'Central defensivo',
+      'Interior',
+      'Medio centro',
+      'Extremo',
+      'Centro delantero'
+    ],
+    'Críquet': [
+      'Bateador',
+      'Lanzador',
+      'Wicket-keeper',
+      'Fielder',
+      'All-rounder'
+    ],
+    'Béisbol': [
+      'Lanzador',
+      'Receptor',
+      'Primera base',
+      'Segunda base',
+      'Tercera base',
+      'Campocorto',
+      'Jardinero izquierdo',
+      'Jardinero central',
+      'Jardinero derecho',
+      'Bateador designado'
+    ],
+    'Rugby League': [
+      'Prop',
+      'Hooker',
+      'Second row',
+      'Lock',
+      'Halfback',
+      'Five-eighth',
+      'Wing',
+      'Center',
+      'Fullback'
+    ],
+    'Lacrosse': [
+      'Portero',
+      'Defensa',
+      'Mediocampista',
+      'Atacante',
+      'Long stick midfielder',
+      'Faceoff specialist'
+    ],
+    'Balonmano': [
+      'Portero',
+      'Extremo derecho',
+      'Extremo izquierdo',
+      'Lateral derecho',
+      'Lateral izquierdo',
+      'Central',
+      'Pivote'
+    ],
+    'Fútbol sala': [
+      'Portero',
+      'Cierre',
+      'Ala derecha',
+      'Ala izquierda',
+      'Pívot',
+      'Universal'
+    ],
+    'Fútbol australiano': [
+      'Full forward',
+      'Centre half-forward',
+      'Centre',
+      'Rover',
+      'Ruckman',
+      'Back pocket',
+      'Half-back flank',
+      'Wingman'
+    ],
+    'Waterpolo': [
+      'Portero',
+      'Boya',
+      'Boya defensivo',
+      'Perimetral derecho',
+      'Perimetral izquierdo',
+      'Exterior',
+      'Universal'
+    ]
   };
+
 
   constructor(
     private fb: FormBuilder,

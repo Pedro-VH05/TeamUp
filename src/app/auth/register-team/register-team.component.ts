@@ -37,7 +37,23 @@ export class RegisterTeamComponent {
     'Vizcaya', 'Zamora', 'Zaragoza'
   ];
 
-  sports = ['Fútbol', 'Baloncesto', 'Voleibol', 'Tenis', 'Pádel'];
+  sports = [
+    'Fútbol',
+    'Baloncesto',
+    'Voleibol',
+    'Fútbol Americano',
+    'Hockey sobre hielo',
+    'Rugby',
+    'Hockey sobre hierba',
+    'Críquet',
+    'Béisbol',
+    'Rugby League',
+    'Lacrosse',
+    'Balonmano',
+    'Fútbol sala',
+    'Fútbol australiano',
+    'Waterpolo'
+  ];
 
   ageCategories = [
     'Prebenjamín (6-8 años)',
