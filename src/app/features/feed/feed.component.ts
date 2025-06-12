@@ -180,7 +180,7 @@ export class FeedComponent implements OnInit, OnDestroy {
           ...data,
           id: docSnap.id,
           uid: docSnap.id,
-          categories: categories // Añadir las categorías procesadas
+          categories: categories
         };
       } else {
         this.profileError = 'Perfil no encontrado';

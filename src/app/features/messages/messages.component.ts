@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, runInInjectionContext, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc, getDocs, writeBatch, arrayUnion, deleteDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../core/services/auth.service';
@@ -42,6 +42,7 @@ export class MessagesComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private routeSub!: Subscription;
   private clickListener!: () => void;
+  private injector = inject(Injector);
 
   currentUser: any;
   conversations$: Observable<Conversation[]> | undefined;
@@ -61,7 +62,11 @@ export class MessagesComponent implements OnInit, OnDestroy {
   confirmationTitle = '';
   confirmationMessage = '';
   currentAction: 'deleteUser' | null = null;
-  actionPayload: any = null
+  actionPayload: any = null;
+  searchQuery = '';
+  searchResults: any[] = [];
+  isSearching = false;
+  searchError: string | null = null;
 
   ngOnInit(): void {
     this.routeSub = this.route.queryParams.subscribe(params => {
@@ -260,6 +265,65 @@ export class MessagesComponent implements OnInit, OnDestroy {
       'deleteUser',
       userId
     );
+  }
+
+  async onSearchInput(): Promise<void> {
+    if (!this.searchQuery.trim()) {
+      this.searchResults = [];
+      return;
+    }
+
+    this.isSearching = true;
+    this.searchError = null;
+
+    try {
+      const searchTerm = this.searchQuery.toLowerCase().trim();
+
+      await runInInjectionContext(this.injector, async () => {
+        const usersRef = collection(this.firestore, 'users');
+        let playersQuery;
+        let teamsQuery;
+
+        if (this.currentUser.type === 'admin') {
+          // Admin: busca en todos los jugadores y equipos sin filtro de deporte
+          playersQuery = query(usersRef, where('type', '==', 'player'), orderBy('firstName'));
+          teamsQuery = query(usersRef, where('type', '==', 'team'), orderBy('teamName'));
+        } else {
+          // Usuario normal: busca solo en usuarios de su mismo deporte
+          const sport = this.currentUser.sport;
+          if (!sport) {
+            this.searchResults = [];
+            return;
+          }
+          playersQuery = query(usersRef, where('type', '==', 'player'), where('sport', '==', sport), orderBy('firstName'));
+          teamsQuery = query(usersRef, where('type', '==', 'team'), where('sport', '==', sport), orderBy('teamName'));
+        }
+
+        const playersSnapshot = await firstValueFrom(collectionData(playersQuery, { idField: 'id' }));
+        const teamsSnapshot = await firstValueFrom(collectionData(teamsQuery, { idField: 'id' }));
+
+        const allUsers = [...playersSnapshot as any[], ...teamsSnapshot as any[]];
+
+        this.searchResults = allUsers.filter(user => {
+          if (user.type === 'player') {
+            const fullName = `${user.firstName} ${user.lastName}`.toLowerCase();
+            return fullName.includes(searchTerm);
+          } else {
+            return user.teamName.toLowerCase().includes(searchTerm);
+          }
+        }).sort((a, b) => {
+          const nameA = this.getDisplayName(a).toLowerCase();
+          const nameB = this.getDisplayName(b).toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      });
+    } catch (error) {
+      console.error('Error en búsqueda:', error);
+      this.searchError = 'Error al realizar la búsqueda';
+      this.searchResults = [];
+    } finally {
+      this.isSearching = false;
+    }
   }
 
   private showConfirmation(title: string, message: string, action: 'deleteUser', payload: any): void {

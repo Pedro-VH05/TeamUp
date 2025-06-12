@@ -15,7 +15,14 @@
     </div>
 
     <div class="header-actions">
-      <input type="text" placeholder="Buscar..." class="search-bar">
+      <input type="text" placeholder="Buscar..." class="search-bar" [(ngModel)]="searchQuery" (input)="onSearchInput()">
+      <div class="search-results" *ngIf="searchResults.length > 0">
+        <div *ngFor="let result of searchResults" class="search-result-item" (click)="viewProfile(result.id)">
+          <img [src]="getProfileImage(result)" alt="Profile" class="search-result-img">
+          <span>{{ getDisplayName(result) }}</span>
+          <span class="search-result-type">{{ result.type === 'player' ? 'Jugador' : 'Club' }}</span>
+        </div>
+      </div>
       <button class="messages-btn" (click)="navigateToFeed()">Feed</button>
     </div>
 
@@ -136,17 +143,30 @@
         <img [src]="getProfileImage(selectedProfile)" alt="Foto perfil" class="profile-img-large">
         <h2 class="profile-name">{{ getDisplayName(selectedProfile) }}</h2>
 
-        <p class="profile-role">{{ selectedProfile.type === 'team' ? 'Club deportivo' : 'Jugador' }}</p>
         <p class="profile-sport"><strong>Deporte:</strong> {{ selectedProfile.sport || 'No especificado' }}</p>
 
         <ng-container *ngIf="selectedProfile.type === 'player'">
+          <p><strong>Usuario:</strong> Jugador</p>
           <p><strong>Posición:</strong> {{ selectedProfile.position }}</p>
-          <p><strong>Experiencia:</strong> {{ selectedProfile.experience }} año(s)</p>
-          <p><strong>Edad:</strong> {{ selectedProfile.birthDate | date:'longDate' }}</p>
+          <p><strong>Experiencia:</strong> {{ selectedProfile.experienceYears }} año(s)</p>
+          <p><strong>Fecha de nacimiento:</strong> {{ selectedProfile.birthDate | date:'longDate' }}</p>
+          <p><strong>¿Buscando equipo actualmente?:</strong> {{ selectedProfile.lookingForTeam ? 'Sí' : 'No' }}</p>
         </ng-container>
 
         <ng-container *ngIf="selectedProfile.type === 'team'">
-          <p><strong>Localización:</strong> {{ selectedProfile.location }}</p>
+          <p><strong>Usuario:</strong> Club deportivo</p>
+          <p><strong>Localización:</strong> {{ selectedProfile.address }}</p>
+          <p><strong>Provincia:</strong> {{ selectedProfile.province }}</p>
+          <div *ngIf="selectedProfile.categories?.length > 0">
+            <h3>Categorías del Club</h3>
+            <div class="team-categories">
+              <div *ngFor="let category of selectedProfile.categories" class="category-card">
+                <p><strong>Categoría de edad:</strong> {{ category.ageCategory }}</p>
+                <p><strong>Género:</strong> {{ category.gender }}</p>
+                <p *ngIf="category.teamName"><strong>Nombre del equipo:</strong> {{ category.teamName }}</p>
+              </div>
+            </div>
+          </div>
         </ng-container>
 
         <button class="send-message-btn" (click)="navigateToMessages(selectedProfile.uid)"
