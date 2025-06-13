@@ -4,13 +4,13 @@ import { Router } from '@angular/router';
 import { UserService } from './user.service';
 import { BehaviorSubject, distinctUntilChanged, Observable, take } from 'rxjs';
 import { browserLocalPersistence, EmailAuthProvider, fetchSignInMethodsForEmail, linkWithCredential, linkWithPopup, setPersistence, signInWithRedirect } from 'firebase/auth';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 @Injectable({
   providedIn: 'root'
 })
 
 export class AuthService {
-  [x: string]: any;
   private auth = inject(Auth);
   private router = inject(Router);
   private userService = inject(UserService);
@@ -88,22 +88,8 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  async registerPlayer(basicData: any, additionalData: any, password: string) {
-    const userCredential = await createUserWithEmailAndPassword(
-      this.auth,
-      basicData.email,
-      password
-    );
-
-    const userDoc = {
-      ...basicData,
-      ...additionalData,
-      type: 'player',
-      registrationDate: new Date().toISOString()
-    };
-
-    await this.userService.createUser(userCredential.user.uid, userDoc);
-    return userCredential.user;
+  async registerWithEmail(email: string, password: string) {
+    return createUserWithEmailAndPassword(this.auth, email, password);
   }
 
   async registerTeam(email: string, password: string) {
@@ -142,7 +128,7 @@ export class AuthService {
       }
 
       this.currentUserSubject.next({ ...userCredential.user, ...userData });
-        return userCredential.user;
+      return userCredential.user;
     } catch (error) {
       console.error('Error en login:', error);
       throw error;
@@ -162,38 +148,6 @@ export class AuthService {
     await signOut(this.auth);
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
-  }
-
-  async loginWithEmail(email: string, password: string) {
-    try {
-      return await signInWithEmailAndPassword(this.auth, email, password);
-    } catch (error: any) {
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        const methods = await fetchSignInMethodsForEmail(this.auth, email);
-
-        // 🟡 Si el correo está registrado con Google pero no con password
-        if (methods.includes('google.com') && !methods.includes('password')) {
-          // Iniciar sesión con Google
-          const provider = new GoogleAuthProvider();
-          const result = await signInWithPopup(this.auth, provider);
-
-          if (result.user.email?.toLowerCase() !== email.toLowerCase()) {
-            await signOut(this.auth);
-            throw new Error('El correo de Google no coincide.');
-          }
-
-          // 🔐 Vincular password
-          const emailCredential = EmailAuthProvider.credential(email, password);
-          await linkWithCredential(result.user, emailCredential);
-
-          console.log('✅ Vinculación exitosa de contraseña');
-          return result;
-        }
-      }
-
-      console.error('Error en loginWithEmail:', error);
-      throw error;
-    }
   }
 
   async completeAccountLink(): Promise<void> {

@@ -3,6 +3,8 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { Storage, getStorage, ref, uploadBytes, getDownloadURL } from '@angular/fire/storage';
+import { UserService } from '../../core/services/user.service';
 
 @Component({
   selector: 'app-register-player',
@@ -14,6 +16,7 @@ import { CommonModule } from '@angular/common';
 export class RegisterPlayerComponent {
   currentStep = 1;
   totalSteps = 2;
+  selectedFile: File | null = null;
 
   // Formulario paso 1 (Datos básicos)
   basicForm: FormGroup;
@@ -200,7 +203,9 @@ export class RegisterPlayerComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router
+    private router: Router,
+    private storage: Storage,
+    private userService: UserService
   ) {
     // Paso 1: Datos básicos
     this.basicForm = this.fb.group({
@@ -227,13 +232,6 @@ export class RegisterPlayerComponent {
       ? null : { mismatch: true };
   }
 
-  onFileSelected(event: any) {
-    const file = event.target.files[0];
-    if (file) {
-      this.sportsForm.patchValue({ profilePicture: file });
-    }
-  }
-
   nextStep() {
     if (this.currentStep === 1 && this.basicForm.valid) {
       this.currentStep++;
@@ -246,26 +244,40 @@ export class RegisterPlayerComponent {
     this.currentStep--;
   }
 
-  async registerPlayer() {
-    if (this.basicForm.invalid || this.sportsForm.invalid) return;
-
-    const { password, confirmPassword, ...basicData } = this.basicForm.value;
-    const sportsData = this.sportsForm.value;
-
-    try {
-      await this.authService.registerPlayer(
-        basicData,
-        {
-          ...sportsData,
-          profilePicture: this.sportsForm.get('profilePicture')?.value
-        },
-        password
-      );
-      this.router.navigate(['/feed']);
-    } catch (error) {
-      console.error('Error en el registro:', error);
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.selectedFile = file; // Actualizado para usar selectedFile
     }
   }
+
+  async registerPlayer() {
+  if (this.basicForm.invalid || this.sportsForm.invalid) return;
+
+  const { password, confirmPassword, ...basicData } = this.basicForm.value;
+  const sportsData = this.sportsForm.value;
+
+  try {
+    const userCredential = await this.authService.registerTeam(
+      basicData.email,
+      password
+    );
+    const userId = userCredential.user.uid;
+
+    const playerData = {
+      ...basicData,
+      ...sportsData,
+      profilePicture: this.selectedFile || null,
+      type: 'player',
+      registrationDate: new Date().toISOString()
+    };
+
+    await this.userService.createUser(userId, playerData);
+    this.router.navigate(['/feed']);
+  } catch (error) {
+    console.error('Error en registro:', error);
+  }
+}
 
   get currentPositions(): string[] {
     const sport = this.sportsForm.get('sport')?.value;
