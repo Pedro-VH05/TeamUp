@@ -84,6 +84,8 @@
 
   .form-group {
     margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
 
     label {
       display: block;
@@ -91,9 +93,13 @@
       font-size: 1.3rem;
       color: #333;
       font-weight: 500;
+      width: 100%;
+      min-width: 200px; // Establece un ancho mínimo consistente
+      flex-shrink: 0; // Evita que se reduzcan
     }
 
-    input, select {
+    input,
+    select {
       width: 100%;
       padding: 0.8rem;
       border: 1px solid #ddd;
@@ -134,23 +140,25 @@
     }
 
     .checkbox-group {
+      display: flex;
       align-items: center;
+      gap: 0.8rem;
       margin-top: 1rem;
 
       input[type="checkbox"] {
         width: 20px;
         height: 20px;
-        margin-right: 1rem;
         accent-color: #f2ac29;
         cursor: pointer;
+        margin: 0;
       }
 
       label {
-        margin-bottom: 0;
+        margin: 0;
         font-size: 1.2rem;
         color: #333;
         cursor: pointer;
-        display: flex;
+        order: -1;
       }
     }
 

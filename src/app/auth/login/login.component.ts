@@ -4,6 +4,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule } from '@angular/forms';
+import { filter, switchMap, take } from 'rxjs';
 
 @Component({
   selector: 'app-login',
@@ -24,6 +25,19 @@ export class LoginComponent {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', Validators.required]
+    });
+  }
+
+  ngOnInit() {
+    this.authService.authReady$.pipe(
+      filter(ready => ready),
+      take(1),
+      switchMap(() => this.authService.currentUser$),
+      take(1)
+    ).subscribe(user => {
+      if (user) {
+        this.router.navigate(['/feed'], { replaceUrl: true });
+      }
     });
   }
 

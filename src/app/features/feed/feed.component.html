@@ -34,11 +34,11 @@
 
       <div class="profile-menu" *ngIf="showProfileMenu" (click)="$event.stopPropagation()">
         <div class="menu-item" (click)="viewProfile(currentUser.uid); $event.stopPropagation()">
-          <span class="menu-icon"><i class="fas fa-user"></i></span>
+          <span class="menu-icon"><i class="icon-user"></i></span>
           <span>Ver mi perfil</span>
         </div>
         <div class="menu-item" (click)="logout(); $event.stopPropagation()">
-          <span class="menu-icon"><i class="fas fa-sign-out-alt"></i></span>
+          <span class="menu-icon"><i class="icon-logout"></i></span>
           <span>Cerrar sesión</span>
         </div>
       </div>
@@ -117,7 +117,8 @@
                 <img [src]="comment.authorPhoto || 'assets/user-profile.jpg'" alt="Comment author"
                   class="comment-author-img">
                 <div class="comment-content">
-                  <span class="comment-author-name" (click)="viewProfile(comment.authorId)">{{ comment.authorName }}</span>
+                  <span class="comment-author-name" (click)="viewProfile(comment.authorId)">{{ comment.authorName
+                    }}</span>
                   <p class="comment-text">{{ comment.text }}</p>
                   <span class="comment-date">{{ comment.createdAt | date:'short' }}</span>
                   <button *ngIf="currentUser?.uid === comment.authorId || currentUser?.type === 'admin'"
@@ -194,6 +195,12 @@
           *ngIf="shouldShowDeleteButton(selectedProfile)">
           Eliminar usuario
         </button>
+
+        <div *ngIf="selectedProfile && currentUser?.uid === selectedProfile.uid" class="profile-actions">
+          <button class="edit-profile-btn" (click)="toggleEditMode()">
+            {{ isEditMode ? 'Cancelar edición' : 'Editar perfil' }}
+          </button>
+        </div>
       </div>
 
       <div *ngIf="profileError" class="error-message">
@@ -211,4 +218,77 @@
       </div>
     </div>
   </div>
+  <div class="edit-profile-overlay" *ngIf="isEditMode && showProfileModal" (click)="closeEditMode()">
+  <div class="edit-profile-modal" (click)="$event.stopPropagation()">
+    <button class="close-btn" (click)="closeEditMode()">×</button>
+
+    <h2>Editar Perfil</h2>
+
+    <div *ngIf="selectedProfile.type === 'player'" class="edit-form">
+      <div class="form-group">
+        <label for="position">Posición:</label>
+        <input type="text" id="position" [(ngModel)]="editFormUser.position">
+      </div>
+
+      <div class="form-group">
+        <label for="experience">Años de experiencia:</label>
+        <input type="number" id="experience" [(ngModel)]="editFormUser.experienceYears" min="0">
+      </div>
+
+      <div class="form-group checkbox-group">
+        <label for="lookingForTeam">¿Buscando equipo?</label>
+        <input type="checkbox" id="lookingForTeam" [(ngModel)]="editFormUser.lookingForTeam">
+      </div>
+    </div>
+
+    <div *ngIf="selectedProfile.type === 'team'" class="edit-form">
+      <div class="form-group">
+        <label for="teamName">Nombre del Club:</label>
+        <input type="text" id="teamName" [(ngModel)]="editFormTeam.teamName">
+      </div>
+
+      <div class="form-group">
+        <label for="province">Provincia:</label>
+        <input type="text" id="province" [(ngModel)]="editFormTeam.province">
+      </div>
+
+      <div class="form-group">
+        <label for="city">Localidad:</label>
+        <input type="text" id="city" [(ngModel)]="editFormTeam.city">
+      </div>
+
+      <div class="form-group">
+        <label for="address">Dirección:</label>
+        <input type="text" id="address" [(ngModel)]="editFormTeam.address">
+      </div>
+
+    <div class="change-password-section">
+      <h3>Cambiar contraseña</h3>
+
+      <div class="form-group">
+        <label for="currentPassword">Contraseña actual:</label>
+        <input type="password" id="currentPassword" [(ngModel)]="passwordForm.currentPassword">
+      </div>
+
+      <div class="form-group">
+        <label for="newPassword">Nueva contraseña:</label>
+        <input type="password" id="newPassword" [(ngModel)]="passwordForm.newPassword">
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirmar nueva contraseña:</label>
+        <input type="password" id="confirmPassword" [(ngModel)]="passwordForm.confirmPassword">
+      </div>
+    </div>
+
+    <div *ngIf="editError" class="error-message">{{ editError }}</div>
+    <div *ngIf="editSuccess" class="success-message">{{ editSuccess }}</div>
+
+    <div class="form-actions">
+      <button class="save-btn" (click)="saveProfileChanges()" [disabled]="isSavingChanges">
+        {{ isSavingChanges ? 'Guardando...' : 'Guardar cambios' }}
+      </button>
+    </div>
+  </div>
+</div>
 </div>

@@ -46,6 +46,30 @@ export class FeedComponent implements OnInit, OnDestroy {
   isLoadingProfile = false;
   profileError: string | null = null;
 
+  isEditMode = false;
+  isSavingChanges = false;
+  editError: string | null = null;
+  editSuccess: string | null = null;
+
+  editFormUser = {
+    position: '',
+    experienceYears: 0,
+    lookingForTeam: false,
+  };
+
+  editFormTeam = {
+    teamName: '',
+    province: '',
+    city: '',
+    address: ''
+  }
+
+  passwordForm = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  };
+
   async ngOnInit(): Promise<void> {
     this.userSub = this.authService.currentUser$.subscribe({
       next: async (user) => {
@@ -164,27 +188,27 @@ export class FeedComponent implements OnInit, OnDestroy {
         const docSnap = await getDoc(docRef);
 
         if (docSnap.exists()) {
-        const data = docSnap.data();
-        // Convertir el objeto de categorías a array si es necesario
-        let categories = [];
-        if (data['categories']) {
-          // Si las categorías están como objeto (como en register-team.component.ts)
-          if (typeof data['categories'] === 'object' && !Array.isArray(data['categories'])) {
-            categories = Object.values(data['categories']);
-          } else {
-            categories = data['categories'];
+          const data = docSnap.data();
+          // Convertir el objeto de categorías a array si es necesario
+          let categories = [];
+          if (data['categories']) {
+            // Si las categorías están como objeto (como en register-team.component.ts)
+            if (typeof data['categories'] === 'object' && !Array.isArray(data['categories'])) {
+              categories = Object.values(data['categories']);
+            } else {
+              categories = data['categories'];
+            }
           }
-        }
 
-        this.selectedProfile = {
-          ...data,
-          id: docSnap.id,
-          uid: docSnap.id,
-          categories: categories
-        };
-      } else {
-        this.profileError = 'Perfil no encontrado';
-      }
+          this.selectedProfile = {
+            ...data,
+            id: docSnap.id,
+            uid: docSnap.id,
+            categories: categories
+          };
+        } else {
+          this.profileError = 'Perfil no encontrado';
+        }
       });
     } catch (error) {
       console.error('Error al cargar perfil:', error);
@@ -456,6 +480,118 @@ export class FeedComponent implements OnInit, OnDestroy {
     } catch (error) {
       console.error('Error al eliminar usuario:', error);
       this.errorMessage = 'Error al eliminar el usuario';
+    }
+  }
+
+  toggleEditMode(): void {
+    this.isEditMode = !this.isEditMode;
+
+    if (this.isEditMode && this.selectedProfile) {
+      // Inicializar el formulario con los datos actuales
+      if (this.selectedProfile.type === 'player') {
+        this.editFormUser = {
+          position: this.selectedProfile.position || '',
+          experienceYears: this.selectedProfile.experienceYears || 0,
+          lookingForTeam: this.selectedProfile.lookingForTeam || false
+        };
+      } else if (this.selectedProfile.type === 'team') {
+        this.editFormTeam = {
+          teamName: this.selectedProfile.teamName || '',
+          province: this.selectedProfile.province || '',
+          city: this.selectedProfile.city || '',
+          address: this.selectedProfile.address || '',
+        };
+      }
+
+      // Resetear el formulario de contraseña
+      this.passwordForm = {
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      };
+
+      // Resetear mensajes
+      this.editError = null;
+      this.editSuccess = null;
+    }
+  }
+
+  closeEditMode(): void {
+    this.isEditMode = false;
+    this.editError = null;
+    this.editSuccess = null;
+  }
+
+  async saveProfileChanges(): Promise<void> {
+    this.isSavingChanges = true;
+    this.editError = null;
+    this.editSuccess = null;
+
+    try {
+      // Validaciones básicas
+      if (this.passwordForm.newPassword && this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+        throw new Error('Las contraseñas nuevas no coinciden');
+      }
+
+      // Actualizar datos del perfil si es jugador
+      if (this.selectedProfile.type === 'player') {
+        const userRef = doc(this.firestore, 'users', this.selectedProfile.uid);
+        await updateDoc(userRef, {
+          position: this.editFormUser.position,
+          experienceYears: this.editFormUser.experienceYears,
+          lookingForTeam: this.editFormUser.lookingForTeam
+        });
+
+        // Actualizar el perfil mostrado
+        this.selectedProfile = {
+          ...this.selectedProfile,
+          position: this.editFormUser.position,
+          experienceYears: this.editFormUser.experienceYears,
+          lookingForTeam: this.editFormUser.lookingForTeam,
+        };
+      } else if (this.selectedProfile.type === 'team') {
+        const userRef = doc(this.firestore, 'users', this.selectedProfile.uid);
+        await updateDoc(userRef, {
+          teamName: this.editFormTeam.teamName,
+          province: this.editFormTeam.province,
+          city: this.editFormTeam.city,
+          address: this.editFormTeam.address
+        });
+
+        // Actualizar el perfil mostrado
+        this.selectedProfile = {
+          ...this.selectedProfile,
+          teamName: this.editFormTeam.teamName,
+          province: this.editFormTeam.province,
+          city: this.editFormTeam.city,
+          address: this.editFormTeam.address
+        };
+      }
+
+      // Cambiar contraseña si se proporcionó
+      if (this.passwordForm.newPassword) {
+        if (!this.passwordForm.currentPassword) {
+          throw new Error('Debes ingresar tu contraseña actual para cambiarla');
+        }
+
+        // Verificar contraseña actual y cambiar la contraseña
+        await this.authService.changePassword(
+          this.currentUser.email,
+          this.passwordForm.currentPassword,
+          this.passwordForm.newPassword
+        );
+      }
+
+      this.editSuccess = 'Cambios guardados correctamente';
+      setTimeout(() => {
+        this.closeEditMode();
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('Error al guardar cambios:', error);
+      this.editError = error.message || 'Error al guardar los cambios';
+    } finally {
+      this.isSavingChanges = false;
     }
   }
 

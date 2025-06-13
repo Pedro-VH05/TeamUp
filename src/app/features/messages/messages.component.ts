@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy, inject, runInInjectionContext, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc, getDocs, writeBatch, arrayUnion, deleteDoc } from '@angular/fire/firestore';
+import { Firestore, collection, collectionData, query, where, doc, setDoc, addDoc, serverTimestamp, orderBy, getDoc, getDocs, writeBatch, arrayUnion, deleteDoc, updateDoc } from '@angular/fire/firestore';
 import { AuthService } from '../../core/services/auth.service';
 import { Observable, Subscription, firstValueFrom, map } from 'rxjs';
 import { FormsModule } from '@angular/forms';
@@ -67,6 +67,23 @@ export class MessagesComponent implements OnInit, OnDestroy {
   searchResults: any[] = [];
   isSearching = false;
   searchError: string | null = null;
+
+  isEditMode = false;
+  isSavingChanges = false;
+  editError: string | null = null;
+  editSuccess: string | null = null;
+
+  editForm = {
+    position: '',
+    experienceYears: 0,
+    lookingForTeam: false
+  };
+
+  passwordForm = {
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  };
 
   ngOnInit(): void {
     this.routeSub = this.route.queryParams.subscribe(params => {
@@ -346,6 +363,92 @@ export class MessagesComponent implements OnInit, OnDestroy {
     }
     this.showConfirmationModal = false;
   }
+
+  toggleEditMode(): void {
+      this.isEditMode = !this.isEditMode;
+
+      if (this.isEditMode && this.selectedProfile) {
+        // Inicializar el formulario con los datos actuales
+        this.editForm = {
+          position: this.selectedProfile.position || '',
+          experienceYears: this.selectedProfile.experienceYears || 0,
+          lookingForTeam: this.selectedProfile.lookingForTeam || false
+        };
+
+        // Resetear el formulario de contraseña
+        this.passwordForm = {
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        };
+
+        // Resetear mensajes
+        this.editError = null;
+        this.editSuccess = null;
+      }
+    }
+
+    closeEditMode(): void {
+      this.isEditMode = false;
+      this.editError = null;
+      this.editSuccess = null;
+    }
+
+    async saveProfileChanges(): Promise<void> {
+      this.isSavingChanges = true;
+      this.editError = null;
+      this.editSuccess = null;
+
+      try {
+        // Validaciones básicas
+        if (this.passwordForm.newPassword && this.passwordForm.newPassword !== this.passwordForm.confirmPassword) {
+          throw new Error('Las contraseñas nuevas no coinciden');
+        }
+
+        // Actualizar datos del perfil si es jugador
+        if (this.selectedProfile.type === 'player') {
+          const userRef = doc(this.firestore, 'users', this.selectedProfile.uid);
+          await updateDoc(userRef, {
+            position: this.editForm.position,
+            experienceYears: this.editForm.experienceYears,
+            lookingForTeam: this.editForm.lookingForTeam
+          });
+
+          // Actualizar el perfil mostrado
+          this.selectedProfile = {
+            ...this.selectedProfile,
+            position: this.editForm.position,
+            experienceYears: this.editForm.experienceYears,
+            lookingForTeam: this.editForm.lookingForTeam
+          };
+        }
+
+        // Cambiar contraseña si se proporcionó
+        if (this.passwordForm.newPassword) {
+          if (!this.passwordForm.currentPassword) {
+            throw new Error('Debes ingresar tu contraseña actual para cambiarla');
+          }
+
+          // Verificar contraseña actual y cambiar la contraseña
+          await this.authService['changePassword'](
+            this.currentUser.email,
+            this.passwordForm.currentPassword,
+            this.passwordForm.newPassword
+          );
+        }
+
+        this.editSuccess = 'Cambios guardados correctamente';
+        setTimeout(() => {
+          this.closeEditMode();
+        }, 2000);
+
+      } catch (error: any) {
+        console.error('Error al guardar cambios:', error);
+        this.editError = error.message || 'Error al guardar los cambios';
+      } finally {
+        this.isSavingChanges = false;
+      }
+    }
 
   async deleteUserConfirmed(userId: string): Promise<void> {
     try {
